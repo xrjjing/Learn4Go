@@ -1,0 +1,59 @@
+// hello.proto - gRPC 服务定义文件
+//
+// Protocol Buffers (protobuf) 是 Google 开发的数据序列化格式，
+// gRPC 使用 protobuf 来定义服务接口和消息格式。
+//
+// 编译此文件需要：
+//   1. protoc 编译器
+//   2. protoc-gen-go 插件（生成 Go 结构体）
+//   3. protoc-gen-go-grpc 插件（生成 gRPC 服务代码）
+//
+// 安装插件：
+//   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+//   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+//
+// 编译命令（在 examples/grpc 目录下）：
+//   protoc --go_out=. --go-grpc_out=. proto/hello.proto
+
+syntax = "proto3";  // 使用 proto3 语法（最新版本）
+
+package hello;  // protobuf 包名，用于避免命名冲突
+
+// go_package 指定生成的 Go 代码的包路径
+// 格式：module_path/package_path;package_name
+option go_package = "github.com/xrjjing/Learn4Go/examples/grpc/proto/hellopb";
+
+// ============ 消息定义 ============
+
+// HelloRequest 是 SayHello RPC 的请求消息
+// protobuf 消息类似于 Go 的 struct，每个字段有类型、名称和编号
+message HelloRequest {
+    string name = 1;  // 字段编号用于序列化，不能重复
+}
+
+// HelloReply 是 SayHello RPC 的响应消息
+message HelloReply {
+    string message = 1;
+}
+
+// Empty 是空消息，用于不需要参数的 RPC
+message Empty {}
+
+// TimeReply 是 WatchTime RPC 流式响应的单条消息
+message TimeReply {
+    string time = 1;  // 时间字符串
+}
+
+// ============ 服务定义 ============
+
+// Greeter 服务定义了两个 RPC 方法
+service Greeter {
+    // SayHello 是普通的 Unary RPC（一问一答）
+    // 客户端发送一个请求，服务端返回一个响应
+    rpc SayHello(HelloRequest) returns (HelloReply);
+
+    // WatchTime 是 Server-side Streaming RPC（服务端流）
+    // 客户端发送一个请求，服务端返回多个响应（流式）
+    // stream 关键字表示返回值是流式的
+    rpc WatchTime(Empty) returns (stream TimeReply);
+}
