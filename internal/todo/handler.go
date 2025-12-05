@@ -25,6 +25,8 @@ type Server struct {
 	refreshMu     sync.Mutex
 	loginFailures map[string]*loginFailure
 	loginMu       sync.Mutex
+	// 清理协程控制
+	cleanupDone chan struct{}
 }
 
 // Option 可选项配置服务器。
@@ -65,12 +67,64 @@ func NewServer(store TodoStore, opts ...Option) *Server {
 		refreshTTL:    defaultRefreshTTL,
 		refreshStore:  make(map[string]refreshSession),
 		loginFailures: make(map[string]*loginFailure),
+		cleanupDone:   make(chan struct{}),
 	}
 	for _, opt := range opts {
 		opt(s)
 	}
 	s.routes()
+	go s.startCleanup()
 	return s
+}
+
+// Shutdown 优雅关闭服务器，停止清理协程
+func (s *Server) Shutdown() {
+	close(s.cleanupDone)
+	if s.rateLimiter != nil {
+		s.rateLimiter.Stop()
+	}
+}
+
+// startCleanup 启动后台清理协程，定期清理过期的 refresh token 和登录失败记录
+func (s *Server) startCleanup() {
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			s.cleanExpiredRefreshTokens()
+			s.cleanExpiredLoginFailures()
+		case <-s.cleanupDone:
+			return
+		}
+	}
+}
+
+// cleanExpiredRefreshTokens 清理过期的 refresh token
+func (s *Server) cleanExpiredRefreshTokens() {
+	s.refreshMu.Lock()
+	defer s.refreshMu.Unlock()
+
+	now := time.Now()
+	for token, session := range s.refreshStore {
+		if now.After(session.expiresAt) {
+			delete(s.refreshStore, token)
+		}
+	}
+}
+
+// cleanExpiredLoginFailures 清理过期的登录失败记录
+func (s *Server) cleanExpiredLoginFailures() {
+	s.loginMu.Lock()
+	defer s.loginMu.Unlock()
+
+	cutoff := time.Now().Add(-loginFailureWindow * 2)
+	for email, rec := range s.loginFailures {
+		if rec.lastFailedAt.Before(cutoff) {
+			delete(s.loginFailures, email)
+		}
+	}
 }
 
 // Handler 返回带日志中间件的处理器。
@@ -258,6 +312,14 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Email == "" || body.Password == "" {
 		respondError(w, http.StatusBadRequest, "email and password required")
+		return
+	}
+	if err := ValidateEmail(body.Email); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := ValidatePassword(body.Password); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	hash, err := HashPassword(body.Password)

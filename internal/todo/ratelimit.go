@@ -14,6 +14,7 @@ type RateLimiter struct {
 	clients map[string]*ClientInfo
 	window  time.Duration
 	limit   int
+	done    chan struct{}
 }
 
 // ClientInfo 客户端信息
@@ -28,6 +29,7 @@ func NewRateLimiter(window time.Duration, limit int) *RateLimiter {
 		clients: make(map[string]*ClientInfo),
 		window:  window,
 		limit:   limit,
+		done:    make(chan struct{}),
 	}
 
 	// 启动清理协程
@@ -36,20 +38,30 @@ func NewRateLimiter(window time.Duration, limit int) *RateLimiter {
 	return limiter
 }
 
+// Stop 停止限流器的后台清理协程
+func (r *RateLimiter) Stop() {
+	close(r.done)
+}
+
 // cleanup 定期清理过期的客户端信息
 func (r *RateLimiter) cleanup() {
 	ticker := time.NewTicker(r.window * 2)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		r.mu.Lock()
-		now := time.Now()
-		for key, client := range r.clients {
-			if now.Sub(client.lastSeen) > r.window*2 {
-				delete(r.clients, key)
+	for {
+		select {
+		case <-ticker.C:
+			r.mu.Lock()
+			now := time.Now()
+			for key, client := range r.clients {
+				if now.Sub(client.lastSeen) > r.window*2 {
+					delete(r.clients, key)
+				}
 			}
+			r.mu.Unlock()
+		case <-r.done:
+			return
 		}
-		r.mu.Unlock()
 	}
 }
 

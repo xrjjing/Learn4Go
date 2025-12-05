@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -38,11 +37,10 @@ import (
 //     -e MYSQL_DATABASE=learn4go \
 //     mysql:8
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	// 读取配置
 	storage := getEnv("TODO_STORAGE", "memory")
 	addr := getEnv("TODO_ADDR", ":8080")
+	jwtSecret := getEnv("JWT_SECRET", "")
 
 	// 创建存储
 	var store todo.TodoStore
@@ -75,8 +73,18 @@ func main() {
 		log.Println("使用内存存储")
 	}
 
+// JWT 密钥配置检查
+	if jwtSecret == "" {
+		if storage == "memory" {
+			jwtSecret = "dev-secret-for-memory-mode-only"
+			log.Println("警告: 使用内置开发密钥，仅限内存模式测试")
+		} else {
+			log.Fatal("错误: 生产模式必须设置 JWT_SECRET 环境变量")
+		}
+	}
+
 	// 启动服务
-	s := todo.NewServer(store)
+	s := todo.NewServer(store, todo.WithJWT(jwtSecret, 24*time.Hour))
 	log.Printf("TODO API 启动: http://localhost%s", addr)
 	log.Println("API 端点:")
 	log.Println("  GET    /todos      - 列表")

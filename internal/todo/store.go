@@ -62,10 +62,24 @@ func (s *Store) ListByUser(userID uint) ([]Todo, error) {
 }
 
 // Create 新建待办。
+// 使用随机 ID 并确保不冲突，最多重试 100 次
 func (s *Store) Create(title string, userID uint) (Todo, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	id := rand.Intn(1_000_000)
+
+	// 生成不冲突的随机 ID
+	var id int
+	for i := 0; i < 100; i++ {
+		id = rand.Intn(1_000_000)
+		if _, exists := s.items[id]; !exists {
+			break
+		}
+		if i == 99 {
+			// 极端情况：ID 空间耗尽，使用时间戳
+			id = int(time.Now().UnixNano() % 1_000_000)
+		}
+	}
+
 	t := Todo{
 		ID:        id,
 		UserID:    userID,

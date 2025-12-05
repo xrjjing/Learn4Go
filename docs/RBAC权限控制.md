@@ -8,21 +8,21 @@
 
 系统预定义了三种角色：
 
-| 角色 | 代码 | 权限范围 | 使用场景 |
-|------|------|---------|---------|
-| **Admin** | `admin` | 完全权限 | 系统管理员，可以查看和操作所有用户的TODO |
-| **User** | `user` | 自己的资源 | 普通用户，只能操作自己创建的TODO |
-| **Guest** | `guest` | 只读权限 | 访客用户，可以查看所有TODO但不能修改 |
+| 角色      | 代码    | 权限范围   | 使用场景                                  |
+| --------- | ------- | ---------- | ----------------------------------------- |
+| **Admin** | `admin` | 完全权限   | 系统管理员，可以查看和操作所有用户的 TODO |
+| **User**  | `user`  | 自己的资源 | 普通用户，只能操作自己创建的 TODO         |
+| **Guest** | `guest` | 只读权限   | 访客用户，可以查看所有 TODO 但不能修改    |
 
 ## 权限矩阵
 
-### TODO资源权限
+### TODO 资源权限
 
-| 角色 | 创建 | 读取 | 更新 | 删除 | 约束 |
-|------|------|------|------|------|------|
-| Admin | ✅ | ✅ | ✅ | ✅ | 无限制 |
-| User | ✅ | ✅ | ✅ | ✅ | 仅自己的TODO |
-| Guest | ❌ | ✅ | ❌ | ❌ | 只读所有TODO |
+| 角色  | 创建 | 读取 | 更新 | 删除 | 约束          |
+| ----- | ---- | ---- | ---- | ---- | ------------- |
+| Admin | ✅   | ✅   | ✅   | ✅   | 无限制        |
+| User  | ✅   | ✅   | ✅   | ✅   | 仅自己的 TODO |
+| Guest | ❌   | ✅   | ❌   | ❌   | 只读所有 TODO |
 
 ## 架构设计
 
@@ -48,7 +48,7 @@ type Todo struct {
 }
 ```
 
-### 2. RBAC管理器
+### 2. RBAC 管理器
 
 ```go
 type RBACManager struct {
@@ -67,7 +67,7 @@ func (m *RBACManager) CheckPermission(role Role, resource Resource, action Actio
 
 ## 使用示例
 
-### 1. Admin用户（完全权限）
+### 1. Admin 用户（完全权限）
 
 ```bash
 # 登录
@@ -91,7 +91,7 @@ curl -X DELETE http://localhost:8080/todos/123 \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
-### 2. User用户（自己的资源）
+### 2. User 用户（自己的资源）
 
 ```bash
 # 登录
@@ -116,7 +116,7 @@ curl -X DELETE http://localhost:8080/todos/999 \
 # 返回: {"error":"you don't own this resource"}
 ```
 
-### 3. Guest用户（只读）
+### 3. Guest 用户（只读）
 
 ```bash
 # 登录
@@ -149,7 +149,7 @@ curl -X POST http://localhost:8080/todos \
 5. 通过则继续，否则返回403
 ```
 
-### 2. 所有权验证（User角色）
+### 2. 所有权验证（User 角色）
 
 ```
 1. 基本权限检查通过
@@ -162,13 +162,13 @@ curl -X POST http://localhost:8080/todos \
 
 ## 错误响应
 
-| HTTP状态码 | 错误信息 | 说明 |
-|-----------|---------|------|
-| 401 | authorization required | 未提供JWT token |
-| 401 | invalid or expired token | Token无效或过期 |
-| 401 | user not found | 用户不存在 |
-| 403 | insufficient permissions | 角色权限不足 |
-| 403 | you don't own this resource | 不是资源所有者 |
+| HTTP 状态码 | 错误信息                    | 说明             |
+| ----------- | --------------------------- | ---------------- |
+| 401         | authorization required      | 未提供 JWT token |
+| 401         | invalid or expired token    | Token 无效或过期 |
+| 401         | user not found              | 用户不存在       |
+| 403         | insufficient permissions    | 角色权限不足     |
+| 403         | you don't own this resource | 不是资源所有者   |
 
 ## 数据库表结构
 
@@ -260,26 +260,28 @@ permissions := map[Role][]Permission{
 ### 3. 动态权限（未来）
 
 当前权限规则硬编码在代码中，未来可以：
+
 - 从数据库加载权限配置
-- 使用Casbin等权限框架
+- 使用 Casbin 等权限框架
 - 支持动态权限分配
 
-## Java开发者对比
+## Java 开发者对比
 
-| 概念 | Java (Spring Security) | Go (本项目) |
-|------|----------------------|------------|
-| 角色定义 | `@RolesAllowed("ADMIN")` | `Role` 常量 |
-| 权限检查 | `hasRole()`, `hasAuthority()` | `CheckPermission()` |
-| 方法级保护 | `@PreAuthorize` | RBAC中间件 |
-| 角色存储 | `GrantedAuthority` | `User.Role` |
-| 权限管理 | `AccessDecisionManager` | `RBACManager` |
-| 所有权验证 | `@PostAuthorize` | 中间件内验证 |
+| 概念       | Java (Spring Security)        | Go (本项目)         |
+| ---------- | ----------------------------- | ------------------- |
+| 角色定义   | `@RolesAllowed("ADMIN")`      | `Role` 常量         |
+| 权限检查   | `hasRole()`, `hasAuthority()` | `CheckPermission()` |
+| 方法级保护 | `@PreAuthorize`               | RBAC 中间件         |
+| 角色存储   | `GrantedAuthority`            | `User.Role`         |
+| 权限管理   | `AccessDecisionManager`       | `RBACManager`       |
+| 所有权验证 | `@PostAuthorize`              | 中间件内验证        |
 
 **关键差异**：
-1. Go使用中间件而非注解
-2. Go的权限检查是显式的函数调用
-3. Go没有AOP，需要手动集成中间件
-4. Go的错误处理是显式的
+
+1. Go 使用中间件而非注解
+2. Go 的权限检查是显式的函数调用
+3. Go 没有 AOP，需要手动集成中间件
+4. Go 的错误处理是显式的
 
 ## 测试
 
@@ -305,9 +307,9 @@ go test ./internal/todo -run TestPermission
 ### 当前实现
 
 - ✅ 角色基于权限验证
-- ✅ 所有权验证（User角色）
+- ✅ 所有权验证（User 角色）
 - ✅ 默认拒绝策略
-- ✅ 权限不足返回403
+- ✅ 权限不足返回 403
 
 ### 生产环境建议
 
@@ -320,38 +322,41 @@ go test ./internal/todo -run TestPermission
 
 ## 故障排查
 
-### 问题1：403 Forbidden
+### 问题 1：403 Forbidden
 
 **原因**：用户角色权限不足
 
 **解决**：
+
 1. 检查用户角色：`SELECT role FROM users WHERE id = ?`
 2. 确认角色权限配置
 3. 查看日志中的权限检查信息
 
-### 问题2：you don't own this resource
+### 问题 2：you don't own this resource
 
-**原因**：User尝试操作其他用户的TODO
-
-**解决**：
-1. 确认TODO的user_id
-2. 确认当前用户ID
-3. 使用Admin账户操作
-
-### 问题3：角色未生效
-
-**原因**：JWT中未包含角色信息或角色未正确设置
+**原因**：User 尝试操作其他用户的 TODO
 
 **解决**：
-1. 重新登录获取新token
-2. 检查User表的role字段
-3. 确认mock数据中的角色设置
+
+1. 确认 TODO 的 user_id
+2. 确认当前用户 ID
+3. 使用 Admin 账户操作
+
+### 问题 3：角色未生效
+
+**原因**：JWT 中未包含角色信息或角色未正确设置
+
+**解决**：
+
+1. 重新登录获取新 token
+2. 检查 User 表的 role 字段
+3. 确认 mock 数据中的角色设置
 
 ## 相关文档
 
-- [JWT认证文档](AUTH.md) - JWT认证系统
-- [API文档](API.md) - API接口说明
-- [变更日志](CHANGELOG.md) - 版本更新记录
+- [JWT 认证文档](JWT认证系统.md) - JWT 认证系统
+- [API 文档](API接口文档.md) - API 接口说明
+- [变更日志](变更日志.md) - 版本更新记录
 
 ---
 

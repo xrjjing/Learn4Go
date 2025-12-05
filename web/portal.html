@@ -1,472 +1,947 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Go 学习门户 - Learn4Go</title>
     <!-- Bootstrap 5.3 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <!-- Google Fonts: Inter and Fira Code -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
-            color: #212529;
-        }
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8f9fa;
+        color: #212529;
+      }
 
-        code {
-            font-family: 'Fira Code', monospace;
-            background-color: #e9ecef;
-            padding: .2rem .4rem;
-            border-radius: .25rem;
-            font-size: 0.9em;
-        }
+      code {
+        font-family: "Fira Code", monospace;
+        background-color: #e9ecef;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+      }
 
-        pre code {
-            background-color: transparent;
-            padding: 0;
-        }
+      pre code {
+        background-color: transparent;
+        padding: 0;
+      }
 
-        pre {
-            background-color: #2d3436;
-            color: #dfe6e9;
-            padding: 1rem;
-            border-radius: .5rem;
-            overflow-x: auto;
-        }
+      pre {
+        background-color: #2d3436;
+        color: #dfe6e9;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+      }
 
-        .navbar {
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0,0,0,.05);
-        }
+      .navbar {
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
 
+      .sidebar {
+        background-color: #ffffff;
+        border-right: 1px solid #dee2e6;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        padding-top: 56px;
+        width: 280px;
+        overflow-y: auto;
+      }
+
+      .main-content {
+        margin-left: 280px;
+        padding: 2rem;
+        padding-top: calc(56px + 2rem);
+      }
+
+      @media (max-width: 767.98px) {
         .sidebar {
-            background-color: #ffffff;
-            border-right: 1px solid #dee2e6;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            padding-top: 56px;
-            width: 280px;
-            overflow-y: auto;
+          position: relative;
+          height: auto;
+          width: 100%;
+          padding-top: 1rem;
+          border-right: none;
+          border-bottom: 1px solid #dee2e6;
         }
-
         .main-content {
-            margin-left: 280px;
-            padding: 2rem;
-            padding-top: calc(56px + 2rem);
+          margin-left: 0;
+          padding-top: 2rem;
         }
+      }
 
-        @media (max-width: 767.98px) {
-            .sidebar {
-                position: relative;
-                height: auto;
-                width: 100%;
-                padding-top: 1rem;
-                border-right: none;
-                border-bottom: 1px solid #dee2e6;
-            }
-            .main-content {
-                margin-left: 0;
-                padding-top: 2rem;
-            }
-        }
+      .chapter-nav .nav-link {
+        color: #495057;
+        padding: 0.75rem 1rem;
+        border-left: 3px solid transparent;
+        font-size: 0.9rem;
+      }
 
-        .chapter-nav .nav-link {
-            color: #495057;
-            padding: .75rem 1rem;
-            border-left: 3px solid transparent;
-            font-size: 0.9rem;
-        }
+      .chapter-nav .nav-link:hover {
+        background-color: #f1f3f5;
+        border-left-color: #dee2e6;
+      }
 
-        .chapter-nav .nav-link:hover {
-            background-color: #f1f3f5;
-            border-left-color: #dee2e6;
-        }
+      .chapter-nav .nav-link.active {
+        font-weight: 500;
+        color: #0d6efd;
+        border-left-color: #0d6efd;
+      }
 
-        .chapter-nav .nav-link.active {
-            font-weight: 500;
-            color: #0d6efd;
-            border-left-color: #0d6efd;
-        }
+      .example-list .list-group-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-        .example-list .list-group-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      .progress-tracker {
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
 
-        .progress-tracker {
-            background-color: #ffffff;
-            padding: 1.5rem;
-            border-radius: .5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,.05);
-        }
+      .completion-check {
+        color: #198754;
+        font-weight: bold;
+      }
 
-        .completion-check {
-            color: #198754;
-            font-weight: bold;
-        }
+      .section-header {
+        color: #6c757d;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1rem 1rem 0.5rem;
+        margin-top: 1rem;
+      }
 
-        .section-header {
-            color: #6c757d;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 1rem 1rem 0.5rem;
-            margin-top: 1rem;
-        }
+      .card-project {
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
 
-        .card-project {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .card-project:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,.1);
-        }
+      .card-project:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#">🐹 Learn4Go</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="portal.html">学习门户</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="projects.html">项目实战</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.html">首页</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="todo-login.html">登录演示</a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <span class="text-muted small me-2">服务状态:</span>
-                    <span id="status-todoapi" class="badge bg-secondary me-1" title="检测中...">TodoAPI</span>
-                    <span id="status-gateway" class="badge bg-secondary" title="检测中...">Gateway</span>
-                </div>
-            </div>
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#">🐹 Learn4Go</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" href="portal.html">学习门户</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="projects.html">项目实战</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">首页</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="todo-login.html">登录演示</a>
+            </li>
+          </ul>
+          <div class="d-flex align-items-center">
+            <span class="text-muted small me-2">服务状态:</span>
+            <span
+              id="status-todoapi"
+              class="badge bg-secondary me-1"
+              title="检测中..."
+              >TodoAPI</span
+            >
+            <span
+              id="status-gateway"
+              class="badge bg-secondary"
+              title="检测中..."
+              >Gateway</span
+            >
+          </div>
         </div>
+      </div>
     </nav>
 
     <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="section-header">基础章节</div>
-                    <ul class="nav flex-column chapter-nav" id="chapter-list"></ul>
+      <div class="row">
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+          <div class="position-sticky pt-3">
+            <div class="section-header">基础章节</div>
+            <ul class="nav flex-column chapter-nav" id="chapter-list"></ul>
 
-                    <div class="section-header">开发环境与框架</div>
-                    <ul class="nav flex-column chapter-nav" id="framework-list"></ul>
+            <div class="section-header">开发环境与框架</div>
+            <ul class="nav flex-column chapter-nav" id="framework-list"></ul>
 
-                    <div class="section-header">项目实战</div>
-                    <ul class="nav flex-column chapter-nav" id="project-list"></ul>
+            <div class="section-header">项目实战</div>
+            <ul class="nav flex-column chapter-nav" id="project-list"></ul>
+          </div>
+        </nav>
+
+        <main class="main-content">
+          <div class="progress-tracker">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">学习进度</h5>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                onclick="resetProgress()"
+              >
+                重置进度
+              </button>
+            </div>
+            <div class="progress" style="height: 20px">
+              <div
+                id="progress-bar"
+                class="progress-bar bg-success"
+                role="progressbar"
+                style="width: 0%"
+              >
+                0%
+              </div>
+            </div>
+            <small class="text-muted mt-2 d-block" id="progress-detail"
+              >已完成 0 / 0 章节</small
+            >
+          </div>
+
+          <div id="content-display">
+            <h1>欢迎来到 Go 学习门户</h1>
+            <p class="lead">从左侧导航选择章节开始你的 Go 语言学习之旅。</p>
+            <p>学习进度会自动保存在浏览器本地存储中。</p>
+
+            <div class="row mt-4">
+              <div class="col-md-4 mb-3">
+                <div class="card card-project h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">📚 语言基础</h5>
+                    <p class="card-text text-muted">
+                      从变量、控制流到并发，10个核心章节带你掌握 Go 基础。
+                    </p>
+                    <a
+                      href="#"
+                      class="btn btn-outline-primary btn-sm"
+                      onclick="scrollToSection('chapter-list')"
+                      >开始学习</a
+                    >
+                  </div>
                 </div>
-            </nav>
-
-            <main class="main-content">
-                <div class="progress-tracker">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">学习进度</h5>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="resetProgress()">重置进度</button>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card card-project h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">🛠️ 开发框架</h5>
+                    <p class="card-text text-muted">
+                      Gin、gRPC、中间件等 Go 生态核心框架介绍与实践。
+                    </p>
+                    <a
+                      href="#"
+                      class="btn btn-outline-primary btn-sm"
+                      onclick="scrollToSection('framework-list')"
+                      >探索框架</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card card-project h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">🚀 项目实战</h5>
+                    <p class="card-text text-muted">
+                      CLI工具、REST API、并发处理等真实项目练习。
+                    </p>
+                    <a
+                      href="#"
+                      class="btn btn-outline-primary btn-sm"
+                      onclick="scrollToSection('project-list')"
+                      >动手实践</a
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card card-project h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">🔐 安全演示</h5>
+                    <p class="card-text text-muted">
+                      体验 JWT + RBAC + Refresh 自动刷新流程。
+                    </p>
+                    <ul class="small text-muted mb-3">
+                      <li>默认账户：admin@example.com / admin123</li>
+                      <li>自动处理 401 → refresh → 重试</li>
+                      <li>后端未启动时：运行 <code>./start-local.sh</code></li>
+                      <li>需要真实后端或使用 Mock（login.html?mock=true）</li>
+                    </ul>
+                    <div class="d-flex flex-wrap gap-2">
+                      <a class="btn btn-primary btn-sm" href="todo-login.html"
+                        >真实后端</a
+                      >
+                      <a
+                        class="btn btn-outline-secondary btn-sm"
+                        href="login.html?mock=true"
+                        >Mock 演示</a
+                      >
                     </div>
-                    <div class="progress" style="height: 20px;">
-                        <div id="progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%;">0%</div>
-                    </div>
-                    <small class="text-muted mt-2 d-block" id="progress-detail">已完成 0 / 0 章节</small>
+                  </div>
                 </div>
-
-                <div id="content-display">
-                    <h1>欢迎来到 Go 学习门户</h1>
-                    <p class="lead">从左侧导航选择章节开始你的 Go 语言学习之旅。</p>
-                    <p>学习进度会自动保存在浏览器本地存储中。</p>
-
-                    <div class="row mt-4">
-                        <div class="col-md-4 mb-3">
-                            <div class="card card-project h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">📚 语言基础</h5>
-                                    <p class="card-text text-muted">从变量、控制流到并发，10个核心章节带你掌握 Go 基础。</p>
-                                    <a href="#" class="btn btn-outline-primary btn-sm" onclick="scrollToSection('chapter-list')">开始学习</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card card-project h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">🛠️ 开发框架</h5>
-                                    <p class="card-text text-muted">Gin、gRPC、中间件等 Go 生态核心框架介绍与实践。</p>
-                                    <a href="#" class="btn btn-outline-primary btn-sm" onclick="scrollToSection('framework-list')">探索框架</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card card-project h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">🚀 项目实战</h5>
-                                    <p class="card-text text-muted">CLI工具、REST API、并发处理等真实项目练习。</p>
-                                    <a href="#" class="btn btn-outline-primary btn-sm" onclick="scrollToSection('project-list')">动手实践</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card card-project h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">🔐 安全演示</h5>
-                                    <p class="card-text text-muted">体验 JWT + RBAC + Refresh 自动刷新流程。</p>
-                                    <ul class="small text-muted mb-3">
-                                        <li>默认账户：admin@example.com / admin123</li>
-                                        <li>自动处理 401 → refresh → 重试</li>
-                                        <li>后端未启动时：运行 <code>./start-local.sh</code></li>
-                                        <li>需要真实后端或使用 Mock（login.html?mock=true）</li>
-                                    </ul>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <a class="btn btn-primary btn-sm" href="todo-login.html">真实后端</a>
-                                        <a class="btn btn-outline-secondary btn-sm" href="login.html?mock=true">Mock 演示</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card card-project h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">🧱 TinyGee 框架</h5>
-                                    <p class="card-text text-muted">仓库内手撸的最小 Web 框架：路由、中间件、模板、JWT/RBAC、限流。</p>
-                                    <ul class="small text-muted mb-3">
-                                        <li>文档：<code>docs/tinygee/quickstart.md</code></li>
-                                        <li>Demo：<code>go run ./cmd/tinygee-demo --port :9999</code></li>
-                                        <li>示例：查看下方示例列表（TinyGee 标签）</li>
-                                    </ul>
-                                    <a class="btn btn-outline-primary btn-sm" href="javascript:void(0)" onclick="copyToClipboard('go run ./cmd/tinygee-demo --port :9999', this)">复制 Demo 命令</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card card-project h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">🧱 TinyGee 框架</h5>
+                    <p class="card-text text-muted">
+                      仓库内手撸的最小 Web
+                      框架：路由、中间件、模板、JWT/RBAC、限流。
+                    </p>
+                    <ul class="small text-muted mb-3">
+                      <li>文档：<code>docs/tinygee/quickstart.md</code></li>
+                      <li>
+                        Demo：<code
+                          >go run ./cmd/tinygee-demo --port :9999</code
+                        >
+                      </li>
+                      <li>示例：查看下方示例列表（TinyGee 标签）</li>
+                    </ul>
+                    <a
+                      class="btn btn-outline-primary btn-sm"
+                      href="javascript:void(0)"
+                      onclick="copyToClipboard('go run ./cmd/tinygee-demo --port :9999', this)"
+                      >复制 Demo 命令</a
+                    >
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
 
-                <hr class="my-5">
+          <hr class="my-5" />
 
-                <h4>可运行示例</h4>
-                <p class="text-muted">这些示例可以直接运行查看 Go 代码效果。</p>
-                <p class="small text-muted">标记说明：<span class="badge bg-info text-dark">🌐 需外网/httpbin</span> <span class="badge bg-secondary">本地</span> <span class="badge bg-warning text-dark">Mock</span></p>
-                <div class="btn-group mb-3" role="group" aria-label="示例过滤">
-                    <button class="btn btn-sm btn-outline-primary active" data-filter="all" onclick="setExampleFilter('all', this)">全部</button>
-                    <button class="btn btn-sm btn-outline-primary" data-filter="local" onclick="setExampleFilter('local', this)">本地</button>
-                    <button class="btn btn-sm btn-outline-primary" data-filter="network" onclick="setExampleFilter('network', this)">需外网</button>
-                    <button class="btn btn-sm btn-outline-primary" data-filter="mock" onclick="setExampleFilter('mock', this)">Mock</button>
-                    <button class="btn btn-sm btn-outline-primary" data-filter="tinygee" onclick="setExampleFilter('tinygee', this)">TinyGee</button>
-                </div>
-                <div class="list-group example-list" id="example-list"></div>
-            </main>
-        </div>
+          <h4>可运行示例</h4>
+          <p class="text-muted">这些示例可以直接运行查看 Go 代码效果。</p>
+          <p class="small text-muted">
+            标记说明：<span class="badge bg-info text-dark"
+              >🌐 需外网/httpbin</span
+            >
+            <span class="badge bg-secondary">本地</span>
+            <span class="badge bg-warning text-dark">Mock</span>
+          </p>
+          <div class="btn-group mb-3" role="group" aria-label="示例过滤">
+            <button
+              class="btn btn-sm btn-outline-primary active"
+              data-filter="all"
+              onclick="setExampleFilter('all', this)"
+            >
+              全部
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-filter="local"
+              onclick="setExampleFilter('local', this)"
+            >
+              本地
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-filter="network"
+              onclick="setExampleFilter('network', this)"
+            >
+              需外网
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-filter="mock"
+              onclick="setExampleFilter('mock', this)"
+            >
+              Mock
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-filter="tinygee"
+              onclick="setExampleFilter('tinygee', this)"
+            >
+              TinyGee
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-filter="io"
+              onclick="setExampleFilter('io', this)"
+            >
+              IO
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-filter="net"
+              onclick="setExampleFilter('net', this)"
+            >
+              网络
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-filter="generic"
+              onclick="setExampleFilter('generic', this)"
+            >
+              泛型
+            </button>
+          </div>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <button
+              class="btn btn-sm btn-outline-secondary"
+              onclick="copyToClipboard('open docs/tinygee/quickstart.md', this)"
+            >
+              📄 TinyGee 文档
+            </button>
+            <button
+              class="btn btn-sm btn-outline-secondary"
+              onclick="copyToClipboard('open docs/IO操作指南.md', this)"
+            >
+              📄 IO 文档
+            </button>
+            <button
+              class="btn btn-sm btn-outline-secondary"
+              onclick="copyToClipboard('open docs/Go工具链.md', this)"
+            >
+              📄 工具链文档
+            </button>
+            <button
+              class="btn btn-sm btn-outline-secondary"
+              onclick="copyToClipboard('open docs/Go基础速查.md', this)"
+            >
+              📄 基础速查
+            </button>
+          </div>
+          <div class="list-group example-list" id="example-list"></div>
+        </main>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="config.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 服务配置（Docker 和本地开发使用不同的健康检查端点）
-            const isDocker = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-            const services = {
-                todoapi: {
-                    url: isDocker ? '/api/todos' : (window.AppConfig?.todoApiBaseUrl || 'http://127.0.0.1:8080'),
-                    healthUrl: isDocker ? '/api/todos' : 'http://127.0.0.1:8080/healthz',
-                    status: 'checking'
-                },
-                gateway: {
-                    url: isDocker ? '/api' : (window.AppConfig?.gatewayUrl || 'http://127.0.0.1:8888'),
-                    healthUrl: isDocker ? '/health' : 'http://127.0.0.1:8888/health',
-                    status: 'checking'
-                }
-            };
+      document.addEventListener("DOMContentLoaded", function () {
+        // 服务配置（Docker 和本地开发使用不同的健康检查端点）
+        const isDocker =
+          window.location.hostname !== "localhost" &&
+          window.location.hostname !== "127.0.0.1";
+        const services = {
+          todoapi: {
+            url: isDocker
+              ? "/api/todos"
+              : window.AppConfig?.todoApiBaseUrl || "http://127.0.0.1:8080",
+            healthUrl: isDocker
+              ? "/api/todos"
+              : "http://127.0.0.1:8080/healthz",
+            status: "checking",
+          },
+          gateway: {
+            url: isDocker
+              ? "/api"
+              : window.AppConfig?.gatewayUrl || "http://127.0.0.1:8888",
+            healthUrl: isDocker ? "/health" : "http://127.0.0.1:8888/health",
+            status: "checking",
+          },
+        };
 
-            // 章节数据
-            const chapters = [
-                { id: "ch01", name: "快速开始与基本语法", file: "01_快速开始与基本语法.md" },
-                { id: "ch02", name: "变量、常量、类型", file: "02_变量_常量_类型.md" },
-                { id: "ch03", name: "流程控制", file: "03_流程控制.md" },
-                { id: "ch04", name: "函数与错误处理", file: "04_函数与错误处理.md" },
-                { id: "ch05", name: "数组、切片、Map", file: "05_数组_切片_map.md" },
-                { id: "ch06", name: "结构体、方法、组合", file: "06_结构体_方法_组合.md" },
-                { id: "ch07", name: "接口与多态", file: "07_接口_多态.md" },
-                { id: "ch08", name: "并发: goroutine与channel", file: "08_并发_goroutine_channel.md" },
-                { id: "ch09", name: "包与模块管理", file: "09_包_模块管理.md" },
-                { id: "ch10", name: "测试与基准", file: "10_测试与基准.md" }
-            ];
+        // 章节数据
+        const chapters = [
+          {
+            id: "ch01",
+            name: "快速开始与基本语法",
+            file: "01_快速开始与基本语法.md",
+          },
+          {
+            id: "ch02",
+            name: "变量、常量、类型",
+            file: "02_变量_常量_类型.md",
+          },
+          { id: "ch03", name: "流程控制", file: "03_流程控制.md" },
+          { id: "ch04", name: "函数与错误处理", file: "04_函数与错误处理.md" },
+          { id: "ch05", name: "数组、切片、Map", file: "05_数组_切片_map.md" },
+          {
+            id: "ch06",
+            name: "结构体、方法、组合",
+            file: "06_结构体_方法_组合.md",
+          },
+          { id: "ch07", name: "接口与多态", file: "07_接口_多态.md" },
+          {
+            id: "ch08",
+            name: "并发: goroutine与channel",
+            file: "08_并发_goroutine_channel.md",
+          },
+          { id: "ch09", name: "包与模块管理", file: "09_包_模块管理.md" },
+          { id: "ch10", name: "测试与基准", file: "10_测试与基准.md" },
+        ];
 
-            const frameworks = [
-                { id: "fw01", name: "工具链与依赖管理", file: "01_工具链_依赖管理.md" },
-                { id: "fw02", name: "Web框架对比", file: "02_Web框架对比_Gin_Echo_Fiber.md" },
-                { id: "fw03", name: "gRPC与微服务入门", file: "03_gRPC_与微服务入门.md" },
-                { id: "fw04", name: "日志、配置与中间件", file: "04_日志_配置_中间件.md" }
-            ];
+        const frameworks = [
+          {
+            id: "fw01",
+            name: "工具链与依赖管理",
+            file: "01_工具链_依赖管理.md",
+          },
+          {
+            id: "fw02",
+            name: "Web框架对比",
+            file: "02_Web框架对比_Gin_Echo_Fiber.md",
+          },
+          {
+            id: "fw03",
+            name: "gRPC与微服务入门",
+            file: "03_gRPC_与微服务入门.md",
+          },
+          {
+            id: "fw04",
+            name: "日志、配置与中间件",
+            file: "04_日志_配置_中间件.md",
+          },
+        ];
 
-            const projects = [
-                { id: "pj01", name: "批量重命名 CLI", cmd: "go run ./cmd/batchrename --help" },
-                { id: "pj02", name: "TODO REST API", cmd: "go run ./cmd/todoapi" },
-                { id: "pj03", name: "日志ZIP归档", cmd: "go run ./cmd/logzip" },
-                { id: "pj04", name: "Worker Pool 并发", cmd: "go run ./examples/workerpool" },
-                { id: "pj05", name: "API 网关 (标准库)", cmd: "go run ./examples/gateway/stdlib" },
-                { id: "pj06", name: "API 网关 (Gin)", cmd: "go run ./examples/gateway/gin" }
-            ];
+        const projects = [
+          {
+            id: "pj01",
+            name: "批量重命名 CLI",
+            cmd: "go run ./cmd/batchrename --help",
+          },
+          { id: "pj02", name: "TODO REST API", cmd: "go run ./cmd/todoapi" },
+          { id: "pj03", name: "日志ZIP归档", cmd: "go run ./cmd/logzip" },
+          {
+            id: "pj04",
+            name: "Worker Pool 并发",
+            cmd: "go run ./examples/workerpool",
+          },
+          {
+            id: "pj05",
+            name: "API 网关 (标准库)",
+            cmd: "go run ./examples/gateway/stdlib",
+          },
+          {
+            id: "pj06",
+            name: "API 网关 (Gin)",
+            cmd: "go run ./examples/gateway/gin",
+          },
+        ];
 
-            const examples = [
-                { name: "Hello World", file: "examples/hello/main.go", cmd: "go run ./examples/hello", desc: "最简单的Go程序", network: false, mock: false },
-                { name: "FizzBuzz", file: "examples/fizzbuzz/main.go", cmd: "go run ./examples/fizzbuzz", desc: "经典编程练习", network: false, mock: false },
-                { name: "Worker Pool", file: "examples/workerpool/main.go", cmd: "go run ./examples/workerpool", desc: "并发任务池模式", network: false, mock: false },
-                { name: "gRPC Server", file: "examples/grpc/server/main.go", cmd: "go run ./examples/grpc/server", desc: "gRPC服务端示例", network: false, mock: false },
-                { name: "gRPC Client", file: "examples/grpc/client/main.go", cmd: "go run ./examples/grpc/client", desc: "gRPC客户端示例", network: false, mock: false },
-                { name: "Gateway (stdlib)", file: "examples/gateway/stdlib/main.go", cmd: "go run ./examples/gateway/stdlib", desc: "标准库反向代理", network: false, mock: false },
-                { name: "Gateway (Gin)", file: "examples/gateway/gin/main.go", cmd: "go run ./examples/gateway/gin", desc: "Gin框架网关", network: false, mock: false },
-                { name: "HTTP Trace", file: "examples/java_compare/httptrace/main.go", cmd: "go run ./examples/java_compare/httptrace", desc: "httptrace 观测 DNS/连接/首字节（需 httpbin）", network: true, mock: false },
-                { name: "URL Encode", file: "examples/java_compare/urlencode/main.go", cmd: "go run ./examples/java_compare/urlencode", desc: "net/url 编解码，对照 URLEncoder", network: false, mock: false },
-                { name: "Ticker 限速", file: "examples/java_compare/ticker_rate_limit/main.go", cmd: "go run ./examples/java_compare/ticker_rate_limit", desc: "time.Ticker 节流，本地运行", network: false, mock: false },
-                { name: "中间件链", file: "examples/java_compare/http_middleware/main.go", cmd: "go run ./examples/java_compare/http_middleware", desc: "net/http 中间件链，本地", network: false, mock: false },
-                { name: "TinyGee Day1", file: "examples/tinygee/day1/main.go", cmd: "go run ./examples/tinygee/day1", desc: "TinyGee 基础路由与 JSON/String", network: false, mock: false, tinygee: true },
-                { name: "TinyGee 路由动态", file: "examples/tinygee/day3/main.go", cmd: "go run ./examples/tinygee/day3", desc: ":param 与 *filepath 动态路由", network: false, mock: false, tinygee: true },
-                { name: "TinyGee 中间件", file: "examples/tinygee/day5/main.go", cmd: "go run ./examples/tinygee/day5", desc: "分组+中间件链", network: false, mock: false, tinygee: true },
-                { name: "TinyGee 模板/静态", file: "examples/tinygee/day6/main.go", cmd: "go run ./examples/tinygee/day6", desc: "模板渲染与静态文件", network: false, mock: false, tinygee: true },
-                { name: "TinyGee Recover", file: "examples/tinygee/day7/main.go", cmd: "go run ./examples/tinygee/day7", desc: "Panic Recover 演示", network: false, mock: false, tinygee: true },
-                { name: "TinyGee JWT/RBAC", file: "examples/tinygee/day9auth/main.go", cmd: "go run ./examples/tinygee/day9auth", desc: "JWT + RBAC 中间件示例", network: false, mock: false, tinygee: true },
-                { name: "TinyGee 限流", file: "examples/tinygee/day9rl/main.go", cmd: "go run ./examples/tinygee/day9rl", desc: "滑动窗口限流演示", network: false, mock: false, tinygee: true },
-                { name: "Login Mock 演示", file: "web/login.html?mock=true", cmd: "open http://localhost:8000/login.html?mock=true", desc: "前端 Mock 登录演示，无需后端", network: false, mock: true }
-            ];
+        const examples = [
+          {
+            name: "Hello World",
+            file: "examples/hello/main.go",
+            cmd: "go run ./examples/hello",
+            desc: "最简单的Go程序",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "FizzBuzz",
+            file: "examples/fizzbuzz/main.go",
+            cmd: "go run ./examples/fizzbuzz",
+            desc: "经典编程练习",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "Worker Pool",
+            file: "examples/workerpool/main.go",
+            cmd: "go run ./examples/workerpool",
+            desc: "并发任务池模式",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "gRPC Server",
+            file: "examples/grpc/server/main.go",
+            cmd: "go run ./examples/grpc/server",
+            desc: "gRPC服务端示例",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "gRPC Client",
+            file: "examples/grpc/client/main.go",
+            cmd: "go run ./examples/grpc/client",
+            desc: "gRPC客户端示例",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "Gateway (stdlib)",
+            file: "examples/gateway/stdlib/main.go",
+            cmd: "go run ./examples/gateway/stdlib",
+            desc: "标准库反向代理",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "Gateway (Gin)",
+            file: "examples/gateway/gin/main.go",
+            cmd: "go run ./examples/gateway/gin",
+            desc: "Gin框架网关",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "HTTP Trace",
+            file: "examples/java_compare/httptrace/main.go",
+            cmd: "go run ./examples/java_compare/httptrace",
+            desc: "httptrace 观测 DNS/连接/首字节（需 httpbin）",
+            network: true,
+            mock: false,
+          },
+          {
+            name: "URL Encode",
+            file: "examples/java_compare/urlencode/main.go",
+            cmd: "go run ./examples/java_compare/urlencode",
+            desc: "net/url 编解码，对照 URLEncoder",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "Ticker 限速",
+            file: "examples/java_compare/ticker_rate_limit/main.go",
+            cmd: "go run ./examples/java_compare/ticker_rate_limit",
+            desc: "time.Ticker 节流，本地运行",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "中间件链",
+            file: "examples/java_compare/http_middleware/main.go",
+            cmd: "go run ./examples/java_compare/http_middleware",
+            desc: "net/http 中间件链，本地",
+            network: false,
+            mock: false,
+          },
+          {
+            name: "IO bufio",
+            file: "examples/io/bufio_rw/main.go",
+            cmd: "go run ./examples/io/bufio_rw",
+            desc: "bufio 读写示例",
+            network: false,
+            mock: false,
+            io: true,
+          },
+          {
+            name: "IO copy",
+            file: "examples/io/copy_file/main.go",
+            cmd: "go run ./examples/io/copy_file",
+            desc: "io.Copy 文件拷贝",
+            network: false,
+            mock: false,
+            io: true,
+          },
+          {
+            name: "IO zip",
+            file: "examples/io/zip_basic/main.go",
+            cmd: "go run ./examples/io/zip_basic",
+            desc: "archive/zip 写读",
+            network: false,
+            mock: false,
+            io: true,
+          },
+          {
+            name: "IO json/xml",
+            file: "examples/io/json_xml/main.go",
+            cmd: "go run ./examples/io/json_xml",
+            desc: "encoding/json & xml",
+            network: false,
+            mock: false,
+            io: true,
+          },
+          {
+            name: "网络 TCP Echo",
+            file: "examples/network/tcp_echo/main.go",
+            cmd: "go run ./examples/network/tcp_echo",
+            desc: "net.TCP echo（本地）",
+            network: false,
+            mock: false,
+            net: true,
+          },
+          {
+            name: "网络 UDP Echo",
+            file: "examples/network/udp_echo/main.go",
+            cmd: "go run ./examples/network/udp_echo",
+            desc: "net.UDP echo（本地）",
+            network: false,
+            mock: false,
+            net: true,
+          },
+          {
+            name: "HTTP Client + ctx",
+            file: "examples/network/http_client_ctx/main.go",
+            cmd: "go run ./examples/network/http_client_ctx",
+            desc: "http.Client + context 超时（需外网）",
+            network: true,
+            mock: false,
+            net: true,
+          },
+          {
+            name: "泛型 Stack",
+            file: "examples/basics/generic_stack/main.go",
+            cmd: "go run ./examples/basics/generic_stack",
+            desc: "Go1.18+ 泛型示例",
+            network: false,
+            mock: false,
+            generic: true,
+          },
+          {
+            name: "TinyGee Day1",
+            file: "examples/tinygee/day1/main.go",
+            cmd: "go run ./examples/tinygee/day1",
+            desc: "TinyGee 基础路由与 JSON/String",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "TinyGee 路由动态",
+            file: "examples/tinygee/day3/main.go",
+            cmd: "go run ./examples/tinygee/day3",
+            desc: ":param 与 *filepath 动态路由",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "TinyGee 中间件",
+            file: "examples/tinygee/day5/main.go",
+            cmd: "go run ./examples/tinygee/day5",
+            desc: "分组+中间件链",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "TinyGee 模板/静态",
+            file: "examples/tinygee/day6/main.go",
+            cmd: "go run ./examples/tinygee/day6",
+            desc: "模板渲染与静态文件",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "TinyGee Recover",
+            file: "examples/tinygee/day7/main.go",
+            cmd: "go run ./examples/tinygee/day7",
+            desc: "Panic Recover 演示",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "TinyGee JWT/RBAC",
+            file: "examples/tinygee/day9auth/main.go",
+            cmd: "go run ./examples/tinygee/day9auth",
+            desc: "JWT + RBAC 中间件示例",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "TinyGee 限流",
+            file: "examples/tinygee/day9rl/main.go",
+            cmd: "go run ./examples/tinygee/day9rl",
+            desc: "滑动窗口限流演示",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "TinyGee Fullstack",
+            file: "examples/tinygee/fullstack/main.go",
+            cmd: "go run ./examples/tinygee/fullstack",
+            desc: "模板+JWT+RBAC+限流+metrics",
+            network: false,
+            mock: false,
+            tinygee: true,
+          },
+          {
+            name: "Login Mock 演示",
+            file: "web/login.html?mock=true",
+            cmd: "open http://localhost:8000/login.html?mock=true",
+            desc: "前端 Mock 登录演示，无需后端",
+            network: false,
+            mock: true,
+          },
+        ];
 
-            let exampleFilter = 'all';
+        let exampleFilter = "all";
 
-            // DOM 元素
-            const chapterList = document.getElementById('chapter-list');
-            const frameworkList = document.getElementById('framework-list');
-            const projectList = document.getElementById('project-list');
-            const exampleList = document.getElementById('example-list');
-            const contentDisplay = document.getElementById('content-display');
-            const progressBar = document.getElementById('progress-bar');
-            const progressDetail = document.getElementById('progress-detail');
+        // DOM 元素
+        const chapterList = document.getElementById("chapter-list");
+        const frameworkList = document.getElementById("framework-list");
+        const projectList = document.getElementById("project-list");
+        const exampleList = document.getElementById("example-list");
+        const contentDisplay = document.getElementById("content-display");
+        const progressBar = document.getElementById("progress-bar");
+        const progressDetail = document.getElementById("progress-detail");
 
-            // 状态管理
-            let completedItems = JSON.parse(localStorage.getItem('learn4goProgress')) || [];
-            const totalItems = chapters.length + frameworks.length + projects.length;
+        // 状态管理
+        let completedItems =
+          JSON.parse(localStorage.getItem("learn4goProgress")) || [];
+        const totalItems =
+          chapters.length + frameworks.length + projects.length;
 
-            // 服务状态检测
-            async function checkServices() {
-                const updateBadge = (id, status) => {
-                    const badge = document.getElementById(id);
-                    if (!badge) return;
-                    badge.className = `badge ${status === 'online' ? 'bg-success' : 'bg-danger'} me-1`;
-                    badge.title = status === 'online' ? '服务在线' : '服务离线';
-                };
+        // 服务状态检测
+        async function checkServices() {
+          const updateBadge = (id, status) => {
+            const badge = document.getElementById(id);
+            if (!badge) return;
+            badge.className = `badge ${
+              status === "online" ? "bg-success" : "bg-danger"
+            } me-1`;
+            badge.title = status === "online" ? "服务在线" : "服务离线";
+          };
 
-                for (const [key, service] of Object.entries(services)) {
-                    try {
-                        const controller = new AbortController();
-                        setTimeout(() => controller.abort(), 2000);
-                        const fetchOptions = isDocker
-                            ? { method: 'GET', signal: controller.signal }
-                            : { method: 'GET', mode: 'no-cors', signal: controller.signal };
-                        await fetch(service.healthUrl, fetchOptions);
-                        service.status = 'online';
-                        updateBadge(`status-${key}`, 'online');
-                    } catch (e) {
-                        service.status = 'offline';
-                        updateBadge(`status-${key}`, 'offline');
-                    }
-                }
+          for (const [key, service] of Object.entries(services)) {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 3000);
+              // Use HEAD request for lighter weight, avoid no-cors which returns opaque response
+              const response = await fetch(service.healthUrl, {
+                method: "HEAD",
+                signal: controller.signal,
+                cache: "no-store",
+              });
+              clearTimeout(timeoutId);
+              // Check if response is successful (2xx status)
+              service.status = response.ok ? "online" : "offline";
+              updateBadge(`status-${key}`, service.status);
+            } catch (e) {
+              // Network error, CORS error, or timeout - all indicate offline
+              service.status = "offline";
+              updateBadge(`status-${key}`, "offline");
             }
+          }
+        }
 
-            // 复制到剪贴板
-            window.copyToClipboard = async function(text, btn) {
-                try {
-                    await navigator.clipboard.writeText(text);
-                    const original = btn.innerHTML;
-                    btn.innerHTML = '✅ 已复制';
-                    btn.classList.replace('btn-outline-secondary', 'btn-success');
-                    setTimeout(() => {
-                        btn.innerHTML = original;
-                        btn.classList.replace('btn-success', 'btn-outline-secondary');
-                    }, 1500);
-                } catch (e) {
-                    alert('复制失败，请手动复制: ' + text);
-                }
-            };
+        // 复制到剪贴板
+        window.copyToClipboard = async function (text, btn) {
+          try {
+            await navigator.clipboard.writeText(text);
+            const original = btn.innerHTML;
+            btn.innerHTML = "✅ 已复制";
+            btn.classList.replace("btn-outline-secondary", "btn-success");
+            setTimeout(() => {
+              btn.innerHTML = original;
+              btn.classList.replace("btn-success", "btn-outline-secondary");
+            }, 1500);
+          } catch (e) {
+            alert("复制失败，请手动复制: " + text);
+          }
+        };
 
-            window.runExample = function(cmd) {
-                alert(`运行命令:\n${cmd}\n\n请在终端中执行此命令。`);
-            };
+        window.runExample = function (cmd) {
+          alert(`运行命令:\n${cmd}\n\n请在终端中执行此命令。`);
+        };
 
-            window.markAsCompleted = function(itemId) {
-                if (!completedItems.includes(itemId)) {
-                    completedItems.push(itemId);
-                    localStorage.setItem('learn4goProgress', JSON.stringify(completedItems));
-                    render();
-                }
-            };
+        window.markAsCompleted = function (itemId) {
+          if (!completedItems.includes(itemId)) {
+            completedItems.push(itemId);
+            localStorage.setItem(
+              "learn4goProgress",
+              JSON.stringify(completedItems)
+            );
+            render();
+          }
+        };
 
-            window.resetProgress = function() {
-                if (confirm('确定要重置所有学习进度吗？')) {
-                    completedItems = [];
-                    localStorage.removeItem('learn4goProgress');
-                    render();
-                }
-            };
+        window.resetProgress = function () {
+          if (confirm("确定要重置所有学习进度吗？")) {
+            completedItems = [];
+            localStorage.removeItem("learn4goProgress");
+            render();
+          }
+        };
 
-            window.scrollToSection = function(sectionId) {
-                document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
-            };
+        window.scrollToSection = function (sectionId) {
+          document
+            .getElementById(sectionId)
+            .scrollIntoView({ behavior: "smooth" });
+        };
 
-            // 渲染函数
-            function renderNavList(items, container, prefix) {
-                container.innerHTML = '';
-                items.forEach((item, index) => {
-                    const isCompleted = completedItems.includes(item.id);
-                    container.innerHTML += `
+        // 渲染函数
+        function renderNavList(items, container, prefix) {
+          container.innerHTML = "";
+          items.forEach((item, index) => {
+            const isCompleted = completedItems.includes(item.id);
+            container.innerHTML += `
                         <li class="nav-item">
-                            <a class="nav-link d-flex justify-content-between" href="#" data-item-id="${item.id}" data-item-name="${item.name}" data-item-type="${prefix}" data-item-cmd="${item.cmd || ''}">
+                            <a class="nav-link d-flex justify-content-between" href="#" data-item-id="${
+                              item.id
+                            }" data-item-name="${
+              item.name
+            }" data-item-type="${prefix}" data-item-cmd="${item.cmd || ""}">
                                 <span>${index + 1}. ${item.name}</span>
-                                ${isCompleted ? '<span class="completion-check">✔</span>' : ''}
+                                ${
+                                  isCompleted
+                                    ? '<span class="completion-check">✔</span>'
+                                    : ""
+                                }
                             </a>
                         </li>
                     `;
-                });
-            }
+          });
+        }
 
-            function setExampleFilter(filter, btn) {
-                exampleFilter = filter;
-                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-                if (btn) btn.classList.add('active');
-                renderExamples();
-            }
+        function setExampleFilter(filter, btn) {
+          exampleFilter = filter;
+          document
+            .querySelectorAll("[data-filter]")
+            .forEach((b) => b.classList.remove("active"));
+          if (btn) btn.classList.add("active");
+          renderExamples();
+        }
 
-            function renderExamples() {
-                exampleList.innerHTML = '';
-                examples.forEach(example => {
-                    if (exampleFilter === 'local' && example.network) return;
-                    if (exampleFilter === 'network' && !example.network) return;
-                    if (exampleFilter === 'mock' && !example.mock) return;
-                    if (exampleFilter === 'tinygee' && !example.tinygee) return;
-                    let badge = example.network ? '<span class="badge bg-info text-dark ms-1">🌐</span>' : '<span class="badge bg-secondary ms-1">本地</span>';
-                    if (example.mock) {
-                        badge += '<span class="badge bg-warning text-dark ms-1">Mock</span>';
-                    }
-                    if (example.tinygee) {
-                        badge += '<span class="badge bg-dark ms-1">TinyGee</span>';
-                    }
-                    exampleList.innerHTML += `
+        function renderExamples() {
+          exampleList.innerHTML = "";
+          examples.forEach((example) => {
+            if (exampleFilter === "local" && example.network) return;
+            if (exampleFilter === "network" && !example.network) return;
+            if (exampleFilter === "mock" && !example.mock) return;
+            if (exampleFilter === "tinygee" && !example.tinygee) return;
+            if (exampleFilter === "io" && !example.io) return;
+            if (exampleFilter === "net" && !example.net) return;
+            if (exampleFilter === "generic" && !example.generic) return;
+            let badge = example.network
+              ? '<span class="badge bg-info text-dark ms-1">🌐</span>'
+              : '<span class="badge bg-secondary ms-1">本地</span>';
+            if (example.mock) {
+              badge +=
+                '<span class="badge bg-warning text-dark ms-1">Mock</span>';
+            }
+            if (example.tinygee) {
+              badge += '<span class="badge bg-dark ms-1">TinyGee</span>';
+            }
+            if (example.io) {
+              badge += '<span class="badge bg-primary ms-1">IO</span>';
+            }
+            if (example.net) {
+              badge += '<span class="badge bg-success ms-1">Net</span>';
+            }
+            if (example.generic) {
+              badge += '<span class="badge bg-secondary ms-1">泛型</span>';
+            }
+            exampleList.innerHTML += `
                         <div class="list-group-item">
                             <div class="flex-grow-1">
                                 <h6 class="mb-1">${example.name} ${badge}</h6>
@@ -479,30 +954,33 @@
                             </div>
                         </div>
                     `;
-                });
-            }
+          });
+        }
 
-            function updateProgress() {
-                const completedCount = completedItems.length;
-                const percentage = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
-                progressBar.style.width = `${percentage}%`;
-                progressBar.textContent = `${percentage}%`;
-                progressDetail.textContent = `已完成 ${completedCount} / ${totalItems} 章节`;
-            }
+        function updateProgress() {
+          const completedCount = completedItems.length;
+          const percentage =
+            totalItems > 0
+              ? Math.round((completedCount / totalItems) * 100)
+              : 0;
+          progressBar.style.width = `${percentage}%`;
+          progressBar.textContent = `${percentage}%`;
+          progressDetail.textContent = `已完成 ${completedCount} / ${totalItems} 章节`;
+        }
 
-            function displayContent(itemId, itemName, itemType, itemCmd) {
-                const isCompleted = completedItems.includes(itemId);
+        function displayContent(itemId, itemName, itemType, itemCmd) {
+          const isCompleted = completedItems.includes(itemId);
 
-                let cmdHint = '';
-                if (itemCmd) {
-                    cmdHint = `
+          let cmdHint = "";
+          if (itemCmd) {
+            cmdHint = `
                         <div class="alert alert-info d-flex justify-content-between align-items-center">
                             <div><strong>运行命令:</strong> <code>${itemCmd}</code></div>
                             <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('${itemCmd}', this)">📋 复制</button>
                         </div>`;
-                }
+          }
 
-                contentDisplay.innerHTML = `
+          contentDisplay.innerHTML = `
                     <h1>${itemName}</h1>
                     ${cmdHint}
                     <p class="lead">这是 "${itemName}" 章节的内容区域。</p>
@@ -516,49 +994,52 @@ func main() {
 }
 </code></pre>
                     <hr>
-                    ${!isCompleted
+                    ${
+                      !isCompleted
                         ? `<button class="btn btn-success" onclick="markAsCompleted('${itemId}')">标记为已完成</button>`
                         : `<p class="text-success fw-bold">✔ 你已完成此章节！</p>`
                     }
                 `;
+        }
+
+        // 事件处理
+        function setupNavListeners(container) {
+          container.addEventListener("click", function (event) {
+            const link = event.target.closest("a.nav-link");
+            if (link) {
+              event.preventDefault();
+              const itemId = link.dataset.itemId;
+              const itemName = link.dataset.itemName;
+              const itemType = link.dataset.itemType;
+              const itemCmd = link.dataset.itemCmd;
+
+              document
+                .querySelectorAll(".chapter-nav .nav-link")
+                .forEach((l) => l.classList.remove("active"));
+              link.classList.add("active");
+
+              displayContent(itemId, itemName, itemType, itemCmd);
             }
+          });
+        }
 
-            // 事件处理
-            function setupNavListeners(container) {
-                container.addEventListener('click', function(event) {
-                    const link = event.target.closest('a.nav-link');
-                    if (link) {
-                        event.preventDefault();
-                        const itemId = link.dataset.itemId;
-                        const itemName = link.dataset.itemName;
-                        const itemType = link.dataset.itemType;
-                        const itemCmd = link.dataset.itemCmd;
+        // 初始化渲染
+        function render() {
+          renderNavList(chapters, chapterList, "ch");
+          renderNavList(frameworks, frameworkList, "fw");
+          renderNavList(projects, projectList, "pj");
+          renderExamples();
+          updateProgress();
+        }
 
-                        document.querySelectorAll('.chapter-nav .nav-link').forEach(l => l.classList.remove('active'));
-                        link.classList.add('active');
+        setupNavListeners(chapterList);
+        setupNavListeners(frameworkList);
+        setupNavListeners(projectList);
 
-                        displayContent(itemId, itemName, itemType, itemCmd);
-                    }
-                });
-            }
-
-            // 初始化渲染
-            function render() {
-                renderNavList(chapters, chapterList, 'ch');
-                renderNavList(frameworks, frameworkList, 'fw');
-                renderNavList(projects, projectList, 'pj');
-                renderExamples();
-                updateProgress();
-            }
-
-            setupNavListeners(chapterList);
-            setupNavListeners(frameworkList);
-            setupNavListeners(projectList);
-
-            render();
-            checkServices();
-            setInterval(checkServices, 30000); // 每30秒检测一次
-        });
+        render();
+        checkServices();
+        setInterval(checkServices, 30000); // 每30秒检测一次
+      });
     </script>
-</body>
+  </body>
 </html>

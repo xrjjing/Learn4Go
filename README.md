@@ -57,6 +57,7 @@ cd Learn4Go-1
 ```
 
 **其他启动模式**：
+
 ```bash
 # SQLite 模式
 ./start-local.sh sqlite
@@ -66,7 +67,7 @@ docker-compose -f deployments/docker-compose.yml up -d mysql
 ./start-local.sh mysql
 ```
 
-详细说明请参考 [本地开发指南](docs/LOCAL_DEVELOPMENT.md)。
+详细说明请参考 [本地开发指南](docs/本地开发指南.md)。
 
 ## 📂 项目结构
 
@@ -149,22 +150,29 @@ Learn4Go-1/
 10. 测试与基准
 
 **实践项目**：
+
 - `examples/hello/` - Hello World
 - `examples/fizzbuzz/` - FizzBuzz 练习
 - `cmd/batchrename/` - 批量重命名 CLI
 - `examples/java_compare/` - Java→Go 对照练习（并发/接口/超时/urlencode/httptrace/词频/ticker/中间件/pprof/sync.Map）
 - `examples/basics/` - 语言基础练习（指针接收者、切片底层、map 零值、defer 捕获、错误包装、channel 超时、context 取消）
+- `examples/io/` - IO/压缩/JSON/XML 示例
+- `examples/network/` - TCP/UDP/http client+ctx 示例
+- `examples/testing/benchmark_pprof/` - 基准与 pprof 入门
+- `examples/tinygee/` - 手撸框架 TinyGee 分日示例
 - `tinygee/` + `examples/tinygee/` - 参考 Gee 教程的最小 Web 框架实现与分日示例（路由、中间件、模板、JWT/RBAC、限流、Recover）
 
-更多练习清单见 `docs/java_compare_exercises.md`。
+更多练习清单见 `docs/Java对照练习.md`。
 
 ## 基础学习资源
-- 推荐阅读 `docs/go_basics_resources.md`：包含官方文档入口、中文教程（含菜鸟教程对照）、学习顺序与仓库内配套练习指引。搭配 `docs/go_basics_cheatsheet.md` 快速回顾要点与对应示例。
+
+- 推荐阅读 `docs/Go学习资源.md`：包含官方文档入口、中文教程（含菜鸟教程对照）、学习顺序与仓库内配套练习指引。搭配 `docs/Go基础速查.md` 快速回顾要点与对应示例。
 
 ## TinyGee 快速上手
-- 目标：在本仓库中手撸一个最小 Web 框架（无第三方依赖），并演示路由、中间件、模板、JWT/RBAC、限流等能力。  
-- 文档：`docs/tinygee/quickstart.md`、`docs/tinygee/tinygee_execution_plan.md`  
-- 运行 demo：`go run ./cmd/tinygee-demo --port :9999 --prom=true`  
+
+- 目标：在本仓库中手撸一个最小 Web 框架（无第三方依赖），并演示路由、中间件、模板、JWT/RBAC、限流等能力。
+- 文档：`docs/tinygee/quickstart.md`、`docs/tinygee/tinygee_execution_plan.md`
+- 运行 demo：`go run ./cmd/tinygee-demo --port :9999 --prom=true`
 - 查看分日示例：`go run ./examples/tinygee/day1`（基础路由）、`day3`（动态路由）、`day5`（分组中间件）、`day6`（模板/静态）、`day7`（Recover）、`day9auth`（JWT/RBAC）、`day9rl`（限流）
 
 ### 阶段二：框架与工具链（1 周）
@@ -179,6 +187,7 @@ Learn4Go-1/
 6. GORM 数据库访问
 
 **实践项目**：
+
 - `examples/config/` - Viper 配置示例
 - `examples/database/` - GORM 数据库示例
 - `examples/grpc/` - gRPC 客户端/服务端
@@ -188,23 +197,27 @@ Learn4Go-1/
 构建完整的微服务应用：
 
 1. **TODO REST API** (`cmd/todoapi/`)
+
    - 支持内存/SQLite/MySQL 存储
    - JWT 认证与授权 🔐
    - 健康检查端点
    - 环境变量配置
 
 2. **认证系统** (`internal/todo/auth.go`)
+
    - 用户注册/登录
    - JWT token 生成与验证
    - bcrypt 密码加密
    - 速率限制
 
 3. **API 网关** (`examples/gateway/gin/`)
+
    - 反向代理
    - 请求日志
    - 限流与熔断（可扩展）
 
 4. **缓存层** (`internal/cache/`)
+
    - Redis 集成
    - 限流实现
 
@@ -223,21 +236,22 @@ Learn4Go-1/
 
 ## 📖 核心文档
 
-| 文档 | 说明 |
-|------|------|
-| [常见问题 FAQ](docs/FAQ.md) | 常见问题解答 ⭐ |
-| [Java vs Go CheatSheet](docs/Java_vs_Go_CheatSheet.md) | Java 开发者速查表 |
-| [本地开发指南](docs/LOCAL_DEVELOPMENT.md) | 本地启动详细步骤 |
-| [部署指南](deployments/README.md) | Docker 部署完整文档 |
-| [API 文档](docs/API.md) | TODO API 接口文档 |
-| [JWT认证文档](docs/AUTH.md) | JWT认证系统说明 🔐 |
-| [变更日志](docs/CHANGELOG.md) | 版本更新记录 |
-| [前端使用指南](docs/FRONTEND.md) | 前端页面使用说明 |
-| [项目计划](plan.md) | 后续开发计划 |
+| 文档                                              | 说明                |
+| ------------------------------------------------- | ------------------- |
+| [常见问题 FAQ](docs/常见问题.md)                  | 常见问题解答 ⭐     |
+| [Java vs Go CheatSheet](docs/Java对照Go速查表.md) | Java 开发者速查表   |
+| [本地开发指南](docs/本地开发指南.md)              | 本地启动详细步骤    |
+| [部署指南](deployments/README.md)                 | Docker 部署完整文档 |
+| [API 文档](docs/API接口文档.md)                   | TODO API 接口文档   |
+| [JWT 认证文档](docs/JWT认证系统.md)               | JWT 认证系统说明 🔐 |
+| [变更日志](docs/变更日志.md)                      | 版本更新记录        |
+| [前端使用指南](docs/前端使用指南.md)              | 前端页面使用说明    |
+| [项目计划](plan.md)                               | 后续开发计划        |
 
 ## 🏗️ 技术栈
 
 ### 后端
+
 - **语言**: Go 1.21+
 - **Web 框架**: Gin
 - **RPC 框架**: gRPC
@@ -249,6 +263,7 @@ Learn4Go-1/
 - **速率限制**: 内存滑动窗口
 
 ### 基础设施
+
 - **数据库**: MySQL 8
 - **缓存**: Redis 7
 - **对象存储**: MinIO
@@ -256,6 +271,7 @@ Learn4Go-1/
 - **反向代理**: Nginx
 
 ### 前端
+
 - **框架**: 原生 HTML/CSS/JavaScript
 - **UI**: Bootstrap 5
 - **字体**: Inter + Fira Code

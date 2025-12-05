@@ -5,7 +5,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"net/mail"
 	"time"
+	"unicode"
 )
 
 const (
@@ -31,7 +33,38 @@ type refreshSession struct {
 var (
 	ErrInvalidRefreshToken = errors.New("invalid refresh token")
 	ErrRefreshExpired      = errors.New("refresh token expired")
+	ErrInvalidEmail        = errors.New("invalid email format")
+	ErrWeakPassword        = errors.New("password must be at least 8 characters with letters and numbers")
 )
+
+// ValidateEmail checks if email format is valid
+func ValidateEmail(email string) error {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return ErrInvalidEmail
+	}
+	return nil
+}
+
+// ValidatePassword checks password strength requirements
+func ValidatePassword(password string) error {
+	if len(password) < 8 {
+		return ErrWeakPassword
+	}
+	var hasLetter, hasDigit bool
+	for _, c := range password {
+		if unicode.IsLetter(c) {
+			hasLetter = true
+		}
+		if unicode.IsDigit(c) {
+			hasDigit = true
+		}
+	}
+	if !hasLetter || !hasDigit {
+		return ErrWeakPassword
+	}
+	return nil
+}
 
 // recordLoginFailure 记录失败并返回是否锁定及重试时间
 func (s *Server) recordLoginFailure(email string) (bool, time.Duration) {

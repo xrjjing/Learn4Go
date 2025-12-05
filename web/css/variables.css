@@ -1,0 +1,80 @@
+/* Learn4Go - Unified CSS Variables */
+/* This file consolidates all theme variables to avoid duplication */
+
+:root {
+    /* Primary Colors */
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #eef2ff;
+
+    /* Background Colors */
+    --bg-app: #f1f5f9;
+    --bg-panel: #ffffff;
+    --bg-card: #ffffff;
+
+    /* Text Colors */
+    --text-main: #334155;
+    --text-heading: #0f172a;
+    --text-muted: #64748b;
+
+    /* Border */
+    --border: #e2e8f0;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.12);
+
+    /* Layout */
+    --radius: 8px;
+    --header-height: 60px;
+    --sidebar-width: 250px;
+
+    /* Code Blocks */
+    --code-bg: #f1f5f9;
+    --code-text: #0f172a;
+}
+
+/* Dark Theme - Manual Toggle */
+[data-theme="dark"] {
+    --primary: #6366f1;
+    --primary-hover: #818cf8;
+    --primary-light: rgba(99, 102, 241, 0.15);
+
+    --bg-app: #020617;
+    --bg-panel: #0f172a;
+    --bg-card: #111827;
+
+    --text-main: #cbd5e1;
+    --text-heading: #f8fafc;
+    --text-muted: #94a3b8;
+
+    --border: #1e293b;
+    --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.25);
+
+    --code-bg: #1e293b;
+    --code-text: #f1f5f9;
+}
+
+/* Dark Theme - System Preference */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --primary: #6366f1;
+        --primary-hover: #818cf8;
+        --primary-light: rgba(99, 102, 241, 0.15);
+
+        --bg-app: #020617;
+        --bg-panel: #0f172a;
+        --bg-card: #111827;
+
+        --text-main: #cbd5e1;
+        --text-heading: #f8fafc;
+        --text-muted: #94a3b8;
+
+        --border: #1e293b;
+        --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.25);
+
+        --code-bg: #1e293b;
+        --code-text: #f1f5f9;
+    }
+}

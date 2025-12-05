@@ -1,40 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Python Learning Platform</title>
-    <style>
-    :root {
-        --bg: #f5f7fb;
-        --card: #ffffff;
-        --text: #1f2937;
-        --muted: #6b7280;
-        --primary: #38bdf8;
-        --border: #e5e7eb;
-    }
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --bg: #0f172a;
-            --card: #111827;
-            --text: #e5e7eb;
-            --muted: #94a3b8;
-            --border: #1f2937;
-            --primary: #38bdf8;
-        }
-        body { background: radial-gradient(circle at 20% 20%, rgba(56,189,248,0.12), transparent 25%), radial-gradient(circle at 80% 0%, rgba(167,139,250,0.12), transparent 22%), var(--bg); }
-    }
-    body { background: var(--bg); color: var(--text); }
-    .card, .section, .table-container {
-        background: var(--card);
-        border: 1px solid var(--border);
-    }
-    h1, h2, h3, p, label, th, td { color: var(--text); }
-    p, label, th { color: var(--muted); }
-    .btn-primary { background: var(--primary); border: none; color: #0b1120; }
-    .btn-primary:hover { filter: brightness(0.95); }
-    </style>
-    </style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>管理后台 - Learn4Go</title>
+    <!-- 统一的 CSS 变量 -->
+    <link rel="stylesheet" href="css/variables.css" />
 
     <!-- ====================================================== -->
     <!-- 模拟 API 脚本 - 必须在其他脚本之前加载                 -->
@@ -53,633 +24,887 @@
     <script src="common.js"></script>
 
     <style>
-/* CSS Variables - Identical to index.html */
-:root {
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --primary-light: #eef2ff;
-    --bg-app: #f1f5f9;
-    --bg-panel: #ffffff;
-    --text-main: #334155;
-    --text-heading: #0f172a;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.12);
-    --radius: 8px;
-    --header-height: 60px;
-    --sidebar-width: 250px;
-    --code-bg: #f1f5f9;
-    --code-text: #0f172a;
-}
+      /* CSS Variables imported from css/variables.css */
 
-[data-theme="dark"] {
-    --primary: #6366f1;
-    --primary-hover: #818cf8;
-    --primary-light: rgba(99, 102, 241, 0.15);
-    --bg-app: #020617;
-    --bg-panel: #0f172a;
-    --text-main: #cbd5e1;
-    --text-heading: #f8fafc;
-    --text-muted: #94a3b8;
-    --border: #1e293b;
-    --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.25);
-    --code-bg: #1e293b;
-    --code-text: #f1f5f9;
-}
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "PingFang SC", "Microsoft YaHei", sans-serif;
+        background-color: var(--bg-app);
+        color: var(--text-main);
+        transition: background-color 0.3s, color 0.3s;
+      }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background-color: var(--bg-app);
-    color: var(--text-main);
-    transition: background-color 0.3s, color 0.3s;
-}
+      /* Layout */
+      .admin-layout {
+        display: flex;
+        min-height: 100vh;
+      }
 
-/* Layout */
-.admin-layout { display: flex; min-height: 100vh; }
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--bg-panel);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        position: fixed;
+        z-index: 10;
+        transition: background-color 0.3s, border-color 0.3s;
+      }
 
-.sidebar {
-    width: var(--sidebar-width);
-    background: var(--bg-panel);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    position: fixed;
-    z-index: 10;
-    transition: background-color 0.3s, border-color 0.3s;
-}
+      .sidebar-header {
+        height: var(--header-height);
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary);
+      }
 
-.sidebar-header {
-    height: var(--header-height);
-    padding: 0 1.5rem;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid var(--border);
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--primary);
-}
+      .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem 1rem;
+      }
+      .sidebar-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+      }
+      .sidebar-footer a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .sidebar-footer a:hover {
+        color: var(--primary);
+      }
 
-.sidebar-content { flex: 1; overflow-y: auto; padding: 1.5rem 1rem; }
-.sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); }
-.sidebar-footer a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
-.sidebar-footer a:hover { color: var(--primary); }
+      .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
 
-.main-content {
-    flex: 1;
-    margin-left: var(--sidebar-width);
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
+      .top-bar {
+        height: var(--header-height);
+        background: var(--bg-panel);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
 
-.top-bar {
-    height: var(--header-height);
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-}
+      .top-bar-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-heading);
+      }
+      .top-bar-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+      .user-info {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-right: 1rem;
+      }
 
-.top-bar-title { font-size: 1.2rem; font-weight: 600; color: var(--text-heading); }
-.top-bar-actions { display: flex; gap: 0.75rem; align-items: center; }
-.user-info { font-size: 0.9rem; color: var(--text-muted); margin-right: 1rem; }
+      .content-area {
+        flex: 1;
+        padding: 2rem;
+      }
 
-.content-area { flex: 1; padding: 2rem; }
+      /* Navigation */
+      .nav-group {
+        margin-bottom: 1.5rem;
+      }
+      .nav-group-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        padding-left: 0.75rem;
+      }
 
-/* Navigation */
-.nav-group { margin-bottom: 1.5rem; }
-.nav-group-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    padding-left: 0.75rem;
-}
+      .nav-item {
+        display: block;
+        padding: 0.6rem 0.75rem;
+        margin-bottom: 2px;
+        border-radius: 6px;
+        color: var(--text-main);
+        text-decoration: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
 
-.nav-item {
-    display: block;
-    padding: 0.6rem 0.75rem;
-    margin-bottom: 2px;
-    border-radius: 6px;
-    color: var(--text-main);
-    text-decoration: none;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
+      .nav-item:hover {
+        background-color: var(--primary-light);
+        color: var(--primary);
+      }
+      .nav-item.active {
+        background-color: var(--primary-light);
+        color: var(--primary);
+        font-weight: 500;
+      }
 
-.nav-item:hover { background-color: var(--primary-light); color: var(--primary); }
-.nav-item.active { background-color: var(--primary-light); color: var(--primary); font-weight: 500; }
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        gap: 0.5rem;
+      }
 
-/* Buttons */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    font-weight: 500;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    gap: 0.5rem;
-}
+      .btn-primary {
+        background-color: var(--primary);
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+      }
+      .btn-secondary {
+        background-color: var(--bg-panel);
+        border: 1px solid var(--border);
+        color: var(--text-main);
+      }
+      .btn-secondary:hover {
+        background-color: var(--bg-app);
+        border-color: var(--text-muted);
+      }
+      .btn-danger {
+        background-color: #ef4444;
+        color: white;
+      }
+      .btn-danger:hover {
+        background-color: #dc2626;
+      }
+      .btn-sm {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+      }
 
-.btn-primary { background-color: var(--primary); color: white; }
-.btn-primary:hover { background-color: var(--primary-hover); }
-.btn-secondary {
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border);
-    color: var(--text-main);
-}
-.btn-secondary:hover { background-color: var(--bg-app); border-color: var(--text-muted); }
-.btn-danger { background-color: #ef4444; color: white; }
-.btn-danger:hover { background-color: #dc2626; }
-.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+      .theme-toggle-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        cursor: pointer;
+        padding: 8px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+      .theme-toggle-btn:hover {
+        background-color: var(--primary-light);
+        color: var(--primary);
+        border-color: var(--primary);
+      }
+      .icon-sun,
+      .icon-moon {
+        display: none;
+      }
+      :root:not([data-theme="dark"]) .icon-sun {
+        display: block;
+      }
+      [data-theme="dark"] .icon-moon {
+        display: block;
+      }
 
-.theme-toggle-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: pointer;
-    padding: 8px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-.theme-toggle-btn:hover { background-color: var(--primary-light); color: var(--primary); border-color: var(--primary); }
-.icon-sun, .icon-moon { display: none; }
-:root:not([data-theme="dark"]) .icon-sun { display: block; }
-[data-theme="dark"] .icon-moon { display: block; }
+      /* Panels */
+      .content-panel {
+        display: none;
+      }
+      .content-panel.active {
+        display: block;
+      }
 
-/* Panels */
-.content-panel { display: none; }
-.content-panel.active { display: block; }
+      /* Stats Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        background: var(--bg-panel);
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+      }
+      .stat-card h3 {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+      .stat-card .value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--text-heading);
+      }
 
-/* Stats Grid */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-.stat-card {
-    background: var(--bg-panel);
-    padding: 1.5rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-}
-.stat-card h3 { color: var(--text-muted); font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
-.stat-card .value { font-size: 2rem; font-weight: 600; color: var(--text-heading); }
+      /* Tables */
+      .table-container {
+        background: var(--bg-panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .table-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .table-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-heading);
+      }
 
-/* Tables */
-.table-container {
-    background: var(--bg-panel);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    overflow: hidden;
-}
-.table-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.table-header h2 { font-size: 1rem; font-weight: 600; color: var(--text-heading); }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .data-table th,
+      .data-table td {
+        text-align: left;
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .data-table th {
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        background: var(--bg-app);
+      }
+      .data-table tr:last-child td {
+        border-bottom: none;
+      }
+      .data-table tr:hover td {
+        background: var(--primary-light);
+      }
 
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { text-align: left; padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border); }
-.data-table th { font-weight: 600; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; background: var(--bg-app); }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: var(--primary-light); }
+      /* Log Viewer */
+      .log-viewer {
+        background: var(--code-bg);
+        color: var(--code-text);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        max-height: 600px;
+        overflow: auto;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
 
-/* Log Viewer */
-.log-viewer {
-    background: var(--code-bg);
-    color: var(--code-text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem;
-    max-height: 600px;
-    overflow: auto;
-    font-family: "JetBrains Mono", Consolas, monospace;
-    font-size: 0.85rem;
-    white-space: pre-wrap;
-    line-height: 1.5;
-}
+      /* Loading */
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+      }
 
-/* Loading */
-.loading { text-align: center; padding: 2rem; color: var(--text-muted); }
-
-/* Responsive */
-@media (max-width: 768px) {
-    .sidebar { display: none; }
-    .main-content { margin-left: 0; }
-    .content-area { padding: 1rem; }
-    .stats-grid { grid-template-columns: 1fr; }
-}
+      /* Responsive */
+      @media (max-width: 768px) {
+        .sidebar {
+          display: none;
+        }
+        .main-content {
+          margin-left: 0;
+        }
+        .content-area {
+          padding: 1rem;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="admin-layout">
-        <aside class="sidebar">
-            <div class="sidebar-header">Admin Dashboard</div>
-            <div class="sidebar-content">
-                <div class="nav-group">
-                    <div class="nav-group-title">Overview</div>
-                    <a href="#dashboard" class="nav-item active" data-panel="dashboard">Dashboard</a>
-                </div>
-                <div class="nav-group">
-                    <div class="nav-group-title">Management</div>
-                    <a href="#users" class="nav-item" data-panel="users">Users</a>
-                    <a href="#roles" class="nav-item" data-panel="roles">Roles</a>
-                    <a href="#permissions" class="nav-item" data-panel="permissions">Permissions</a>
-                </div>
-                <div class="nav-group">
-                    <div class="nav-group-title">Monitoring</div>
-                    <a href="#logs" class="nav-item" data-panel="logs">Audit Logs</a>
-                </div>
+      <aside class="sidebar">
+        <div class="sidebar-header">Admin Dashboard</div>
+        <div class="sidebar-content">
+          <div class="nav-group">
+            <div class="nav-group-title">Overview</div>
+            <a href="#dashboard" class="nav-item active" data-panel="dashboard"
+              >Dashboard</a
+            >
+          </div>
+          <div class="nav-group">
+            <div class="nav-group-title">Management</div>
+            <a href="#users" class="nav-item" data-panel="users">Users</a>
+            <a href="#roles" class="nav-item" data-panel="roles">Roles</a>
+            <a href="#permissions" class="nav-item" data-panel="permissions"
+              >Permissions</a
+            >
+          </div>
+          <div class="nav-group">
+            <div class="nav-group-title">Monitoring</div>
+            <a href="#logs" class="nav-item" data-panel="logs">Audit Logs</a>
+          </div>
+        </div>
+        <div class="sidebar-footer">
+          <a href="index.html">Back to Learning</a>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div class="top-bar">
+          <div class="top-bar-title">RBAC Management</div>
+          <div class="top-bar-actions">
+            <span class="user-info" id="user-info"></span>
+            <div class="debug-toggle-container">
+              <input type="checkbox" id="debug-toggle" />
+              <label for="debug-toggle">调试模式</label>
             </div>
-            <div class="sidebar-footer">
-                <a href="index.html">Back to Learning</a>
+            <button
+              id="theme-toggle"
+              class="theme-toggle-btn"
+              aria-label="Toggle Dark Mode"
+            >
+              <svg
+                class="icon-sun"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg
+                class="icon-moon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                ></path>
+              </svg>
+            </button>
+            <button id="logout-btn" class="btn btn-secondary">Logout</button>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <!-- Dashboard Panel -->
+          <section id="dashboard" class="content-panel active">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <h3>Total Users</h3>
+                <p id="stat-users" class="value">-</p>
+              </div>
+              <div class="stat-card">
+                <h3>Total Roles</h3>
+                <p id="stat-roles" class="value">-</p>
+              </div>
+              <div class="stat-card">
+                <h3>Total Permissions</h3>
+                <p id="stat-permissions" class="value">-</p>
+              </div>
+              <div class="stat-card">
+                <h3>Recent Logs</h3>
+                <p id="stat-logs" class="value">-</p>
+              </div>
             </div>
-        </aside>
+          </section>
 
-        <main class="main-content">
-            <div class="top-bar">
-                <div class="top-bar-title">RBAC Management</div>
-                <div class="top-bar-actions">
-                    <span class="user-info" id="user-info"></span>
-                    <div class="debug-toggle-container">
-                        <input type="checkbox" id="debug-toggle" />
-                        <label for="debug-toggle">调试模式</label>
-                    </div>
-                    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Dark Mode">
-                        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                    </button>
-                    <button id="logout-btn" class="btn btn-secondary">Logout</button>
-                </div>
+          <!-- Users Panel -->
+          <section id="users" class="content-panel">
+            <div class="table-container">
+              <div class="table-header">
+                <h2>User Management</h2>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="showCreateUserModal()"
+                >
+                  + Create User
+                </button>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Active</th>
+                    <th>Superuser</th>
+                    <th>Roles</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table"></tbody>
+              </table>
             </div>
+          </section>
 
-            <div class="content-area">
-                <!-- Dashboard Panel -->
-                <section id="dashboard" class="content-panel active">
-                    <div class="stats-grid">
-                        <div class="stat-card"><h3>Total Users</h3><p id="stat-users" class="value">-</p></div>
-                        <div class="stat-card"><h3>Total Roles</h3><p id="stat-roles" class="value">-</p></div>
-                        <div class="stat-card"><h3>Total Permissions</h3><p id="stat-permissions" class="value">-</p></div>
-                        <div class="stat-card"><h3>Recent Logs</h3><p id="stat-logs" class="value">-</p></div>
-                    </div>
-                </section>
-
-                <!-- Users Panel -->
-                <section id="users" class="content-panel">
-                    <div class="table-container">
-                        <div class="table-header">
-                            <h2>User Management</h2>
-                            <button class="btn btn-primary btn-sm" onclick="showCreateUserModal()">+ Create User</button>
-                        </div>
-                        <table class="data-table">
-                            <thead><tr><th>ID</th><th>Username</th><th>Active</th><th>Superuser</th><th>Roles</th><th>Actions</th></tr></thead>
-                            <tbody id="users-table"></tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Roles Panel -->
-                <section id="roles" class="content-panel">
-                    <div class="table-container">
-                        <div class="table-header">
-                            <h2>Role Management</h2>
-                            <button class="btn btn-primary btn-sm" onclick="showCreateRoleModal()">+ Create Role</button>
-                        </div>
-                        <table class="data-table">
-                            <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Permissions</th></tr></thead>
-                            <tbody id="roles-table"></tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Permissions Panel -->
-                <section id="permissions" class="content-panel">
-                    <div class="table-container">
-                        <div class="table-header"><h2>Permission List</h2></div>
-                        <table class="data-table">
-                            <thead><tr><th>ID</th><th>Code</th><th>Description</th></tr></thead>
-                            <tbody id="permissions-table"></tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Logs Panel -->
-                <section id="logs" class="content-panel">
-                    <div class="table-container">
-                        <div class="table-header">
-                            <h2>Audit Logs</h2>
-                            <button class="btn btn-secondary btn-sm" onclick="loadAuditLogs()">Refresh</button>
-                        </div>
-                        <pre id="log-viewer" class="log-viewer">Loading audit logs...</pre>
-                    </div>
-                </section>
+          <!-- Roles Panel -->
+          <section id="roles" class="content-panel">
+            <div class="table-container">
+              <div class="table-header">
+                <h2>Role Management</h2>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="showCreateRoleModal()"
+                >
+                  + Create Role
+                </button>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Permissions</th>
+                  </tr>
+                </thead>
+                <tbody id="roles-table"></tbody>
+              </table>
             </div>
-        </main>
+          </section>
+
+          <!-- Permissions Panel -->
+          <section id="permissions" class="content-panel">
+            <div class="table-container">
+              <div class="table-header"><h2>Permission List</h2></div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Code</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody id="permissions-table"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Logs Panel -->
+          <section id="logs" class="content-panel">
+            <div class="table-container">
+              <div class="table-header">
+                <h2>Audit Logs</h2>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  onclick="loadAuditLogs()"
+                >
+                  Refresh
+                </button>
+              </div>
+              <pre id="log-viewer" class="log-viewer">
+Loading audit logs...</pre
+              >
+            </div>
+          </section>
+        </div>
+      </main>
     </div>
 
     <script>
-    (() => {
+      (() => {
         // API Configuration - defaults to same origin for production
-        const API_BASE = window.AppConfig?.apiBaseUrl ?? window.API_BASE_URL ?? '';
-        const LOG_API_BASE = window.AppConfig?.logApiBaseUrl ?? window.LOG_API_BASE_URL ?? '';
+        const API_BASE =
+          window.AppConfig?.apiBaseUrl ?? window.API_BASE_URL ?? "";
+        const LOG_API_BASE =
+          window.AppConfig?.logApiBaseUrl ?? window.LOG_API_BASE_URL ?? "";
 
         // Authentication check
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem("accessToken");
         if (!token) {
-            window.location.href = 'login.html';
-            return;
+          window.location.href = "login.html";
+          return;
         }
 
         // Theme management
         const htmlEl = document.documentElement;
-        const themeToggle = document.getElementById('theme-toggle');
+        const themeToggle = document.getElementById("theme-toggle");
         let currentTheme = null;
-        try { currentTheme = localStorage.getItem('theme'); } catch (e) {}
-        const systemPrefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-        htmlEl.setAttribute('data-theme', currentTheme === 'dark' || (!currentTheme && systemPrefersDark) ? 'dark' : 'light');
+        try {
+          currentTheme = localStorage.getItem("theme");
+        } catch (e) {}
+        const systemPrefersDark = window.matchMedia?.(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        htmlEl.setAttribute(
+          "data-theme",
+          currentTheme === "dark" || (!currentTheme && systemPrefersDark)
+            ? "dark"
+            : "light"
+        );
 
-        themeToggle?.addEventListener('click', () => {
-            const newTheme = htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            htmlEl.setAttribute('data-theme', newTheme);
-            try { localStorage.setItem('theme', newTheme); } catch (e) {}
+        themeToggle?.addEventListener("click", () => {
+          const newTheme =
+            htmlEl.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          htmlEl.setAttribute("data-theme", newTheme);
+          try {
+            localStorage.setItem("theme", newTheme);
+          } catch (e) {}
         });
 
         // Logout
-        document.getElementById('logout-btn')?.addEventListener('click', async () => {
+        document
+          .getElementById("logout-btn")
+          ?.addEventListener("click", async () => {
             try {
-                await fetch(`${API_BASE}/auth/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+              await fetch(`${API_BASE}/auth/logout`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+              });
             } catch (e) {}
-            localStorage.removeItem('accessToken');
-            window.location.href = 'login.html';
-        });
+            localStorage.removeItem("accessToken");
+            window.location.href = "login.html";
+          });
 
         // API Helper with unified response handling
         async function apiFetch(url, options = {}) {
-            const headers = {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                ...options.headers,
-            };
+          const headers = {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            ...options.headers,
+          };
 
-            const response = await fetch(url, { ...options, headers });
+          const response = await fetch(url, { ...options, headers });
 
-            if (response.status === 401) {
-                localStorage.removeItem('accessToken');
-                window.location.href = 'login.html';
-                throw new Error('Unauthorized');
-            }
+          if (response.status === 401) {
+            localStorage.removeItem("accessToken");
+            window.location.href = "login.html";
+            throw new Error("Unauthorized");
+          }
 
-            const body = await response.json();
+          const body = await response.json();
 
-            if (body.code !== 'OK') {
-                throw new Error(body.message || 'Request failed');
-            }
+          if (body.code !== "OK") {
+            throw new Error(body.message || "Request failed");
+          }
 
-            return body.data;
+          return body.data;
         }
 
         // Navigation
-        const navItems = document.querySelectorAll('.nav-item');
-        const panels = document.querySelectorAll('.content-panel');
+        const navItems = document.querySelectorAll(".nav-item");
+        const panels = document.querySelectorAll(".content-panel");
 
         function switchPanel(panelId) {
-            navItems.forEach(item => item.classList.toggle('active', item.dataset.panel === panelId));
-            panels.forEach(panel => panel.classList.toggle('active', panel.id === panelId));
+          navItems.forEach((item) =>
+            item.classList.toggle("active", item.dataset.panel === panelId)
+          );
+          panels.forEach((panel) =>
+            panel.classList.toggle("active", panel.id === panelId)
+          );
 
-            // Load data for panel
-            switch (panelId) {
-                case 'dashboard': loadDashboard(); break;
-                case 'users': loadUsers(); break;
-                case 'roles': loadRoles(); break;
-                case 'permissions': loadPermissions(); break;
-                case 'logs': loadAuditLogs(); break;
-            }
+          // Load data for panel
+          switch (panelId) {
+            case "dashboard":
+              loadDashboard();
+              break;
+            case "users":
+              loadUsers();
+              break;
+            case "roles":
+              loadRoles();
+              break;
+            case "permissions":
+              loadPermissions();
+              break;
+            case "logs":
+              loadAuditLogs();
+              break;
+          }
         }
 
-        navItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                switchPanel(item.dataset.panel);
-            });
+        navItems.forEach((item) => {
+          item.addEventListener("click", (e) => {
+            e.preventDefault();
+            switchPanel(item.dataset.panel);
+          });
         });
 
         // Data Loading Functions
         async function loadCurrentUser() {
-            try {
-                const user = await apiFetch(`${API_BASE}/auth/me`);
-                document.getElementById('user-info').textContent = `${user.username} ${user.is_superuser ? '(Admin)' : ''}`;
-                if (!user.is_superuser) {
-                    alert('Access denied. Admin privileges required.');
-                    window.location.href = 'index.html';
-                }
-            } catch (error) {
-                console.error('Failed to load user:', error);
+          try {
+            const user = await apiFetch(`${API_BASE}/auth/me`);
+            document.getElementById("user-info").textContent = `${
+              user.username
+            } ${user.is_superuser ? "(Admin)" : ""}`;
+            if (!user.is_superuser) {
+              alert("Access denied. Admin privileges required.");
+              window.location.href = "index.html";
             }
+          } catch (error) {
+            console.error("Failed to load user:", error);
+          }
         }
 
         async function loadDashboard() {
-            try {
-                const [users, roles, permissions] = await Promise.all([
-                    apiFetch(`${API_BASE}/users/`),
-                    apiFetch(`${API_BASE}/rbac/roles`),
-                    apiFetch(`${API_BASE}/rbac/permissions`)
-                ]);
-                document.getElementById('stat-users').textContent = users.length;
-                document.getElementById('stat-roles').textContent = roles.length;
-                document.getElementById('stat-permissions').textContent = permissions.length;
+          try {
+            const [users, roles, permissions] = await Promise.all([
+              apiFetch(`${API_BASE}/users/`),
+              apiFetch(`${API_BASE}/rbac/roles`),
+              apiFetch(`${API_BASE}/rbac/permissions`),
+            ]);
+            document.getElementById("stat-users").textContent = users.length;
+            document.getElementById("stat-roles").textContent = roles.length;
+            document.getElementById("stat-permissions").textContent =
+              permissions.length;
 
-                // Try to load logs count
-                try {
-                    const logs = await fetch(`${LOG_API_BASE}/logs`).then(r => r.json());
-                    const logData = logs.data || logs;
-                    document.getElementById('stat-logs').textContent = Array.isArray(logData) ? logData.length : '-';
-                } catch { document.getElementById('stat-logs').textContent = 'N/A'; }
-            } catch (error) {
-                console.error('Failed to load dashboard:', error);
+            // Try to load logs count
+            try {
+              const logs = await fetch(`${LOG_API_BASE}/logs`).then((r) =>
+                r.json()
+              );
+              const logData = logs.data || logs;
+              document.getElementById("stat-logs").textContent = Array.isArray(
+                logData
+              )
+                ? logData.length
+                : "-";
+            } catch {
+              document.getElementById("stat-logs").textContent = "N/A";
             }
+          } catch (error) {
+            console.error("Failed to load dashboard:", error);
+          }
         }
 
         async function loadUsers() {
-            try {
-                const users = await apiFetch(`${API_BASE}/users/`);
+          try {
+            const users = await apiFetch(`${API_BASE}/users/`);
 
-                // 使用通用表格渲染器 - 配置驱动的方式
-                renderGenericTable('users-table', users, [
-                    { key: 'id' },
-                    { key: 'username' },
-                    { key: 'is_active', render: (val) => val ? 'Yes' : 'No' },
-                    { key: 'is_superuser', render: (val) => val ? 'Yes' : 'No' },
-                    { key: 'roles', render: (roles) => (roles || []).map(r => r.name).join(', ') || '-' },
-                    {
-                        key: 'id',
-                        render: (_, user) => {
-                            const button = document.createElement('button');
-                            button.className = 'btn btn-secondary btn-sm';
-                            button.textContent = user.is_active ? 'Disable' : 'Enable';
-                            button.onclick = () => toggleUserActive(user.id, !user.is_active);
-                            return button;
-                        }
-                    }
-                ]);
-            } catch (error) {
-                console.error('Failed to load users:', error);
-                showToast('Failed to load users: ' + error.message, 'error');
-            }
+            // 使用通用表格渲染器 - 配置驱动的方式
+            renderGenericTable("users-table", users, [
+              { key: "id" },
+              { key: "username" },
+              { key: "is_active", render: (val) => (val ? "Yes" : "No") },
+              { key: "is_superuser", render: (val) => (val ? "Yes" : "No") },
+              {
+                key: "roles",
+                render: (roles) =>
+                  (roles || []).map((r) => r.name).join(", ") || "-",
+              },
+              {
+                key: "id",
+                render: (_, user) => {
+                  const button = document.createElement("button");
+                  button.className = "btn btn-secondary btn-sm";
+                  button.textContent = user.is_active ? "Disable" : "Enable";
+                  button.onclick = () =>
+                    toggleUserActive(user.id, !user.is_active);
+                  return button;
+                },
+              },
+            ]);
+          } catch (error) {
+            console.error("Failed to load users:", error);
+            showToast("Failed to load users: " + error.message, "error");
+          }
         }
 
         async function loadRoles() {
-            try {
-                const roles = await apiFetch(`${API_BASE}/rbac/roles`);
+          try {
+            const roles = await apiFetch(`${API_BASE}/rbac/roles`);
 
-                // 使用通用表格渲染器
-                renderGenericTable('roles-table', roles, [
-                    { key: 'id' },
-                    { key: 'name' },
-                    { key: 'description' },
-                    { key: 'permissions', render: (perms) => (perms || []).map(p => p.code).join(', ') || '-' }
-                ]);
-            } catch (error) {
-                console.error('Failed to load roles:', error);
-                showToast('Failed to load roles: ' + error.message, 'error');
-            }
+            // 使用通用表格渲染器
+            renderGenericTable("roles-table", roles, [
+              { key: "id" },
+              { key: "name" },
+              { key: "description" },
+              {
+                key: "permissions",
+                render: (perms) =>
+                  (perms || []).map((p) => p.code).join(", ") || "-",
+              },
+            ]);
+          } catch (error) {
+            console.error("Failed to load roles:", error);
+            showToast("Failed to load roles: " + error.message, "error");
+          }
         }
 
         async function loadPermissions() {
-            try {
-                const permissions = await apiFetch(`${API_BASE}/rbac/permissions`);
+          try {
+            const permissions = await apiFetch(`${API_BASE}/rbac/permissions`);
 
-                // 使用通用表格渲染器
-                renderGenericTable('permissions-table', permissions, [
-                    { key: 'id' },
-                    { key: 'code' },
-                    { key: 'description' }
-                ]);
-            } catch (error) {
-                console.error('Failed to load permissions:', error);
-                showToast('Failed to load permissions: ' + error.message, 'error');
-            }
+            // 使用通用表格渲染器
+            renderGenericTable("permissions-table", permissions, [
+              { key: "id" },
+              { key: "code" },
+              { key: "description" },
+            ]);
+          } catch (error) {
+            console.error("Failed to load permissions:", error);
+            showToast("Failed to load permissions: " + error.message, "error");
+          }
         }
 
-        window.loadAuditLogs = async function() {
-            const viewer = document.getElementById('log-viewer');
-            viewer.textContent = 'Loading...';
-            try {
-                const response = await fetch(`${LOG_API_BASE}/logs`);
-                const body = await response.json();
-                const logs = body.data || body;
-                viewer.textContent = JSON.stringify(logs, null, 2);
-            } catch (error) {
-                viewer.textContent = `Failed to load logs: ${error.message}\n\nNote: Ensure log_audit_service is running on port 8002.`;
-            }
+        window.loadAuditLogs = async function () {
+          const viewer = document.getElementById("log-viewer");
+          viewer.textContent = "Loading...";
+          try {
+            const response = await fetch(`${LOG_API_BASE}/logs`);
+            const body = await response.json();
+            const logs = body.data || body;
+            viewer.textContent = JSON.stringify(logs, null, 2);
+          } catch (error) {
+            viewer.textContent = `Failed to load logs: ${error.message}\n\nNote: Ensure log_audit_service is running on port 8002.`;
+          }
         };
 
         // CRUD Operations (exposed globally for onclick handlers)
-        window.toggleUserActive = async function(userId, setActive) {
-            const action = setActive ? 'enable' : 'disable';
-            if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} user ${userId}?`)) return;
-            try {
-                await apiFetch(`${API_BASE}/users/${userId}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ is_active: setActive })
-                });
-                loadUsers();
-            } catch (error) {
-                alert(`Failed to ${action} user: ${error.message}`);
-            }
+        window.toggleUserActive = async function (userId, setActive) {
+          const action = setActive ? "enable" : "disable";
+          if (
+            !confirm(
+              `${
+                action.charAt(0).toUpperCase() + action.slice(1)
+              } user ${userId}?`
+            )
+          )
+            return;
+          try {
+            await apiFetch(`${API_BASE}/users/${userId}`, {
+              method: "PATCH",
+              body: JSON.stringify({ is_active: setActive }),
+            });
+            loadUsers();
+          } catch (error) {
+            alert(`Failed to ${action} user: ${error.message}`);
+          }
         };
 
-        window.showCreateUserModal = function() {
-            const username = prompt('Enter username:');
-            if (!username) return;
-            const password = prompt('Enter password:');
-            if (!password) return;
-            createUser(username, password);
+        window.showCreateUserModal = function () {
+          const username = prompt("Enter username:");
+          if (!username) return;
+          const password = prompt("Enter password:");
+          if (!password) return;
+          createUser(username, password);
         };
 
         async function createUser(username, password) {
-            try {
-                await apiFetch(`${API_BASE}/users/`, {
-                    method: 'POST',
-                    body: JSON.stringify({ username, password, is_active: true, is_superuser: false })
-                });
-                loadUsers();
-            } catch (error) {
-                alert(`Failed to create user: ${error.message}`);
-            }
+          try {
+            await apiFetch(`${API_BASE}/users/`, {
+              method: "POST",
+              body: JSON.stringify({
+                username,
+                password,
+                is_active: true,
+                is_superuser: false,
+              }),
+            });
+            loadUsers();
+          } catch (error) {
+            alert(`Failed to create user: ${error.message}`);
+          }
         }
 
-        window.showCreateRoleModal = function() {
-            const name = prompt('Enter role name:');
-            if (!name) return;
-            const description = prompt('Enter description (optional):') || '';
-            createRole(name, description);
+        window.showCreateRoleModal = function () {
+          const name = prompt("Enter role name:");
+          if (!name) return;
+          const description = prompt("Enter description (optional):") || "";
+          createRole(name, description);
         };
 
         async function createRole(name, description) {
-            try {
-                await apiFetch(`${API_BASE}/rbac/roles`, {
-                    method: 'POST',
-                    body: JSON.stringify({ name, description })
-                });
-                loadRoles();
-            } catch (error) {
-                alert(`Failed to create role: ${error.message}`);
-            }
+          try {
+            await apiFetch(`${API_BASE}/rbac/roles`, {
+              method: "POST",
+              body: JSON.stringify({ name, description }),
+            });
+            loadRoles();
+          } catch (error) {
+            alert(`Failed to create role: ${error.message}`);
+          }
         }
 
         // Initialize
         loadCurrentUser();
-        switchPanel('dashboard');
+        switchPanel("dashboard");
 
         // 调试面板初始化
-        const debugToggle = document.getElementById('debug-toggle');
+        const debugToggle = document.getElementById("debug-toggle");
         if (debugToggle) {
-            debugToggle.addEventListener('change', (e) => {
-                toggleDebugPanel(e.target.checked);
-            });
+          debugToggle.addEventListener("change", (e) => {
+            toggleDebugPanel(e.target.checked);
+          });
         }
-    })();
+      })();
     </script>
 
     <!-- ====================================================== -->
     <!-- 调试面板 - 显示 API 请求/响应日志                      -->
     <!-- ====================================================== -->
     <div id="debug-panel" class="debug-panel">
-        <div class="debug-header">
-            <span>🔌 API 通信日志</span>
-            <div>
-                <button class="btn-debug" onclick="clearDebugLogs()">清除</button>
-                <button class="btn-debug" onclick="toggleDebugPanel(false); document.getElementById('debug-toggle').checked = false;">关闭</button>
-            </div>
+      <div class="debug-header">
+        <span>🔌 API 通信日志</span>
+        <div>
+          <button class="btn-debug" onclick="clearDebugLogs()">清除</button>
+          <button
+            class="btn-debug"
+            onclick="toggleDebugPanel(false); document.getElementById('debug-toggle').checked = false;"
+          >
+            关闭
+          </button>
         </div>
-        <div id="log-container" class="log-container">
-            <div class="log-entry" style="color: var(--text-muted);">
-                💡 提示：勾选右上角的"调试模式"开关即可查看 API 请求日志
-            </div>
+      </div>
+      <div id="log-container" class="log-container">
+        <div class="log-entry" style="color: var(--text-muted)">
+          💡 提示：勾选右上角的"调试模式"开关即可查看 API 请求日志
         </div>
+      </div>
     </div>
 
     <style>
-    /* 调试面板样式 */
-    .debug-panel {
+      /* 调试面板样式 */
+      .debug-panel {
         display: none;
         position: fixed;
         bottom: 0;
@@ -690,11 +915,11 @@ body {
         border-top: 2px solid var(--border);
         box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
         z-index: 1000;
-        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-family: "Consolas", "Monaco", "Courier New", monospace;
         font-size: 12px;
-    }
+      }
 
-    .debug-header {
+      .debug-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -703,27 +928,27 @@ body {
         border-bottom: 1px solid var(--border);
         font-weight: 600;
         color: var(--text-heading);
-    }
+      }
 
-    .log-container {
+      .log-container {
         height: calc(100% - 40px);
         overflow-y: auto;
         padding: 12px;
         background: var(--bg-app);
-    }
+      }
 
-    .log-entry {
+      .log-entry {
         padding: 6px 0;
         border-bottom: 1px solid var(--border);
         line-height: 1.6;
         color: var(--text-main);
-    }
+      }
 
-    .log-entry:last-child {
+      .log-entry:last-child {
         border-bottom: none;
-    }
+      }
 
-    .btn-debug {
+      .btn-debug {
         background: var(--bg-panel);
         border: 1px solid var(--border);
         padding: 4px 12px;
@@ -732,31 +957,31 @@ body {
         margin-left: 8px;
         color: var(--text-main);
         font-size: 12px;
-    }
+      }
 
-    .btn-debug:hover {
+      .btn-debug:hover {
         background: var(--primary-light);
         border-color: var(--primary);
         color: var(--primary);
-    }
+      }
 
-    /* 调试开关样式 */
-    .debug-toggle-container {
+      /* 调试开关样式 */
+      .debug-toggle-container {
         display: flex;
         align-items: center;
         gap: 8px;
         margin-left: 16px;
-    }
+      }
 
-    .debug-toggle-container input[type="checkbox"] {
+      .debug-toggle-container input[type="checkbox"] {
         cursor: pointer;
-    }
+      }
 
-    .debug-toggle-container label {
+      .debug-toggle-container label {
         cursor: pointer;
         user-select: none;
         font-size: 14px;
-    }
+      }
     </style>
-</body>
+  </body>
 </html>

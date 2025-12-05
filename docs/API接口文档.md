@@ -37,18 +37,20 @@
 **重要**: 从 v1.1.0 开始，所有 `/todos*` 接口需要 JWT 认证。
 
 **认证方式**:
+
 ```http
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
-**获取Token**: 通过 `/login` 接口登录获取JWT token。
+**获取 Token**: 通过 `/login` 接口登录获取 JWT token。
 
-**Mock用户**（用于测试）:
+**Mock 用户**（用于测试）:
+
 - `admin@example.com` / `admin123`
 - `user@example.com` / `user123`
 - `demo@example.com` / `demo123`
 
-详细认证文档请参考 [AUTH.md](AUTH.md)
+详细认证文档请参考 [JWT 认证系统](JWT认证系统.md)
 
 ---
 
@@ -70,10 +72,10 @@ Content-Type: application/json
 
 **参数说明**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| email | string | 是 | 用户邮箱，必须唯一 |
-| password | string | 是 | 用户密码，建议8位以上 |
+| 字段     | 类型   | 必填 | 说明                    |
+| -------- | ------ | ---- | ----------------------- |
+| email    | string | 是   | 用户邮箱，必须唯一      |
+| password | string | 是   | 用户密码，建议 8 位以上 |
 
 **响应**
 
@@ -125,10 +127,10 @@ Content-Type: application/json
 
 **参数说明**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| email | string | 是 | 用户邮箱 |
-| password | string | 是 | 用户密码 |
+| 字段     | 类型   | 必填 | 说明     |
+| -------- | ------ | ---- | -------- |
+| email    | string | 是   | 用户邮箱 |
+| password | string | 是   | 用户密码 |
 
 **响应**
 
@@ -305,9 +307,9 @@ Content-Type: application/json
 
 **参数说明**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| title | string | 是 | 待办事项标题，不能为空 |
+| 字段  | 类型   | 必填 | 说明                   |
+| ----- | ------ | ---- | ---------------------- |
+| title | string | 是   | 待办事项标题，不能为空 |
 
 **响应**
 
@@ -370,15 +372,15 @@ Content-Type: application/json
 
 **路径参数**
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| id | integer | 待办事项 ID |
+| 参数 | 类型    | 说明        |
+| ---- | ------- | ----------- |
+| id   | integer | 待办事项 ID |
 
 **请求体参数**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| done | boolean | 是 | 完成状态，true 表示已完成 |
+| 字段 | 类型    | 必填 | 说明                      |
+| ---- | ------- | ---- | ------------------------- |
+| done | boolean | 是   | 完成状态，true 表示已完成 |
 
 **响应**
 
@@ -436,9 +438,9 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 **路径参数**
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| id | integer | 待办事项 ID |
+| 参数 | 类型    | 说明        |
+| ---- | ------- | ----------- |
+| id   | integer | 待办事项 ID |
 
 **响应**
 
@@ -473,12 +475,12 @@ curl -X DELETE http://localhost:8888/api/todos/todos/1 \
 
 ### Todo 对象
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | integer | 唯一标识符，自动生成 |
-| title | string | 待办事项标题 |
-| done | boolean | 完成状态，默认 false |
-| created_at | string | 创建时间，ISO 8601 格式 |
+| 字段       | 类型    | 说明                    |
+| ---------- | ------- | ----------------------- |
+| id         | integer | 唯一标识符，自动生成    |
+| title      | string  | 待办事项标题            |
+| done       | boolean | 完成状态，默认 false    |
+| created_at | string  | 创建时间，ISO 8601 格式 |
 
 **示例**
 
@@ -505,15 +507,15 @@ curl -X DELETE http://localhost:8888/api/todos/todos/1 \
 
 ### HTTP 状态码
 
-| 状态码 | 说明 | 场景 |
-|--------|------|------|
-| 200 OK | 请求成功 | GET、PUT 成功 |
-| 201 Created | 资源创建成功 | POST 成功 |
-| 204 No Content | 请求成功，无返回内容 | DELETE 成功 |
-| 400 Bad Request | 请求参数错误 | 缺少必填字段、JSON 格式错误 |
-| 404 Not Found | 资源不存在 | ID 不存在 |
-| 405 Method Not Allowed | 方法不允许 | 使用了不支持的 HTTP 方法 |
-| 500 Internal Server Error | 服务器内部错误 | 数据库错误等 |
+| 状态码                    | 说明                 | 场景                        |
+| ------------------------- | -------------------- | --------------------------- |
+| 200 OK                    | 请求成功             | GET、PUT 成功               |
+| 201 Created               | 资源创建成功         | POST 成功                   |
+| 204 No Content            | 请求成功，无返回内容 | DELETE 成功                 |
+| 400 Bad Request           | 请求参数错误         | 缺少必填字段、JSON 格式错误 |
+| 404 Not Found             | 资源不存在           | ID 不存在                   |
+| 405 Method Not Allowed    | 方法不允许           | 使用了不支持的 HTTP 方法    |
+| 500 Internal Server Error | 服务器内部错误       | 数据库错误等                |
 
 ### 常见错误
 
@@ -526,6 +528,7 @@ curl -X POST http://localhost:8080/todos \
 ```
 
 响应：
+
 ```json
 {
   "error": "title required"
@@ -541,6 +544,7 @@ curl -X POST http://localhost:8080/todos \
 ```
 
 响应：
+
 ```json
 {
   "error": "invalid json"
@@ -556,6 +560,7 @@ curl -X PUT http://localhost:8080/todos/999 \
 ```
 
 响应：
+
 ```json
 {
   "error": "not found"
@@ -714,14 +719,14 @@ curl -s http://localhost:8080/todos | jq '.[] | select(.done == false)'
 
 ### TODO API 配置
 
-| 变量名 | 说明 | 默认值 | 示例 |
-|--------|------|--------|------|
-| TODO_STORAGE | 存储类型 | memory | memory, sqlite, mysql |
-| TODO_DB_HOST | 数据库主机 | localhost | mysql, 127.0.0.1 |
-| TODO_DB_PORT | 数据库端口 | 3306 | 3306 |
-| TODO_DB_USER | 数据库用户 | root | root, gouser |
-| TODO_DB_PASS | 数据库密码 | - | password123 |
-| TODO_DB_NAME | 数据库名称 | learn4go | learn4go |
+| 变量名       | 说明       | 默认值    | 示例                  |
+| ------------ | ---------- | --------- | --------------------- |
+| TODO_STORAGE | 存储类型   | memory    | memory, sqlite, mysql |
+| TODO_DB_HOST | 数据库主机 | localhost | mysql, 127.0.0.1      |
+| TODO_DB_PORT | 数据库端口 | 3306      | 3306                  |
+| TODO_DB_USER | 数据库用户 | root      | root, gouser          |
+| TODO_DB_PASS | 数据库密码 | -         | password123           |
+| TODO_DB_NAME | 数据库名称 | learn4go  | learn4go              |
 
 ### 使用示例
 
@@ -772,8 +777,8 @@ MySQL 模式下，GORM 自动管理连接池：
 - ✅ JSON 格式验证
 - ✅ SQL 注入防护（GORM 参数化查询）
 - ✅ 错误信息脱敏（不暴露内部错误）
-- ✅ JWT认证（v1.1.0+）
-- ✅ bcrypt密码加密
+- ✅ JWT 认证（v1.1.0+）
+- ✅ bcrypt 密码加密
 - ✅ 基于内存的速率限制
 
 ### 生产环境建议
@@ -783,15 +788,15 @@ MySQL 模式下，GORM 自动管理连接池：
 - [ ] 添加 CORS 配置
 - [ ] 添加请求日志
 - [ ] 添加审计日志
-- [ ] Token刷新机制
+- [ ] Token 刷新机制
 - [ ] 登录失败次数限制
 - [ ] 密码强度验证
 
 ## 相关文档
 
 - [README.md](../README.md) - 项目总览
-- [认证系统文档](AUTH.md) - JWT认证详细说明
-- [前端使用指南](FRONTEND.md) - 前端页面说明
+- [认证系统文档](JWT认证系统.md) - JWT 认证详细说明
+- [前端使用指南](前端使用指南.md) - 前端页面说明
 - [部署指南](../deployments/README.md) - Docker 部署
 - [项目计划](../plan.md) - 后续开发计划
 

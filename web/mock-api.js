@@ -18,8 +18,8 @@
  * 2. localStorage.removeItem('mockApi')
  */
 
-(function() {
-  'use strict';
+(function () {
+  "use strict";
 
   // ==================== 配置区 ====================
 
@@ -43,12 +43,12 @@
   function isMockMode() {
     // 方式 1：URL 参数检查
     const urlParams = new URLSearchParams(window.location.search);
-    const isUrlMock = urlParams.get('mock') === 'true';
+    const isUrlMock = urlParams.get("mock") === "true";
 
     // 方式 2：localStorage 检查
     let isStorageMock = false;
     try {
-      isStorageMock = localStorage.getItem('mockApi') === 'true';
+      isStorageMock = localStorage.getItem("mockApi") === "true";
     } catch (e) {
       // 处理 localStorage 不可用的情况（如隐私模式）
     }
@@ -81,13 +81,13 @@
     if (!ENABLE_VERBOSE_LOGGING) return;
 
     const styles = {
-      info: 'color: #2196F3; font-weight: bold;',
-      success: 'color: #4CAF50; font-weight: bold;',
-      warn: 'color: #FF9800; font-weight: bold;',
-      error: 'color: #F44336; font-weight: bold;'
+      info: "color: #2196F3; font-weight: bold;",
+      success: "color: #4CAF50; font-weight: bold;",
+      warn: "color: #FF9800; font-weight: bold;",
+      error: "color: #F44336; font-weight: bold;",
     };
 
-    const prefix = '[Mock API]';
+    const prefix = "[Mock API]";
     console.log(`%c${prefix} ${message}`, styles[type] || styles.info);
     if (data !== undefined) {
       console.log(data);
@@ -103,12 +103,12 @@
   function createMockResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
       status: status,
-      statusText: status === 200 ? 'OK' : 'Error',
+      statusText: status === 200 ? "OK" : "Error",
       headers: {
-        'Content-Type': 'application/json',
-        'X-Mock-API': 'true',
-        'X-Mock-Timestamp': new Date().toISOString()
-      }
+        "Content-Type": "application/json",
+        "X-Mock-API": "true",
+        "X-Mock-Timestamp": new Date().toISOString(),
+      },
     });
   }
 
@@ -120,7 +120,7 @@
    */
   function findMockData(method, path) {
     if (!window.mockData) {
-      log('warn', 'mockData 未定义，请确保已加载 mock-data.js');
+      log("warn", "mockData 未定义，请确保已加载 mock-data.js");
       return null;
     }
 
@@ -147,33 +147,33 @@
    * 拦截后的 fetch 函数
    * 在模拟模式下返回模拟数据，否则调用真实 API
    */
-  window.fetch = function(url, options = {}) {
+  window.fetch = function (url, options = {}) {
     // 如果未启用模拟模式，直接调用原始 fetch
     if (!isMockMode()) {
       return originalFetch.apply(this, arguments);
     }
 
-    const method = (options.method || 'GET').toUpperCase();
+    const method = (options.method || "GET").toUpperCase();
     const path = extractPathFromUrl(url);
 
-    log('info', `拦截请求: ${method} ${path}`);
+    log("info", `拦截请求: ${method} ${path}`);
 
     // 查找匹配的模拟数据
     const mockResponseData = findMockData(method, path);
 
     if (mockResponseData) {
-      log('success', `找到模拟数据: ${path}`, mockResponseData);
+      log("success", `找到模拟数据: ${path}`, mockResponseData);
 
       // 返回一个 Promise，模拟异步网络请求
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           const response = createMockResponse(mockResponseData);
-          log('success', `返回模拟响应 (延迟 ${MOCK_API_DELAY}ms): ${path}`);
+          log("success", `返回模拟响应 (延迟 ${MOCK_API_DELAY}ms): ${path}`);
           resolve(response);
         }, MOCK_API_DELAY);
       });
     } else {
-      log('warn', `未找到模拟数据: ${path}，回退到真实 API 调用`);
+      log("warn", `未找到模拟数据: ${path}，回退到真实 API 调用`);
       // 如果没有找到模拟数据，回退到真实 fetch
       return originalFetch.apply(this, arguments);
     }
@@ -182,19 +182,19 @@
   // ==================== 初始化 ====================
 
   if (isMockMode()) {
-    log('success', '🎭 模拟 API 模式已激活', {
-      '延迟时间': `${MOCK_API_DELAY}ms`,
-      '详细日志': ENABLE_VERBOSE_LOGGING ? '已启用' : '已禁用',
-      '停用方法': [
-        '1. 移除 URL 中的 ?mock=true',
-        '2. 执行 localStorage.removeItem("mockApi")'
-      ]
+    log("success", "🎭 模拟 API 模式已激活", {
+      延迟时间: `${MOCK_API_DELAY}ms`,
+      详细日志: ENABLE_VERBOSE_LOGGING ? "已启用" : "已禁用",
+      停用方法: [
+        "1. 移除 URL 中的 ?mock=true",
+        '2. 执行 localStorage.removeItem("mockApi")',
+      ],
     });
 
     // 在页面上显示一个提示标识
-    const mockBadge = document.createElement('div');
-    mockBadge.id = 'mock-api-badge';
-    mockBadge.innerHTML = '🎭 Mock Mode';
+    const mockBadge = document.createElement("div");
+    mockBadge.id = "mock-api-badge";
+    mockBadge.textContent = "🎭 Mock Mode";
     mockBadge.style.cssText = `
       position: fixed;
       bottom: 20px;
@@ -210,21 +210,21 @@
       cursor: pointer;
       transition: all 0.3s ease;
     `;
-    mockBadge.title = '点击查看模拟模式信息';
+    mockBadge.title = "点击查看模拟模式信息";
 
-    mockBadge.addEventListener('click', () => {
+    mockBadge.addEventListener("click", () => {
       alert(
-        '🎭 模拟 API 模式已激活\n\n' +
-        '当前所有 API 请求都会返回模拟数据\n\n' +
-        '停用方法：\n' +
-        '1. 移除 URL 中的 ?mock=true\n' +
-        '2. 在控制台执行：localStorage.removeItem("mockApi")'
+        "🎭 模拟 API 模式已激活\n\n" +
+          "当前所有 API 请求都会返回模拟数据\n\n" +
+          "停用方法：\n" +
+          "1. 移除 URL 中的 ?mock=true\n" +
+          '2. 在控制台执行：localStorage.removeItem("mockApi")'
       );
     });
 
     // 等待 DOM 加载完成后添加标识
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(mockBadge);
       });
     } else {
@@ -236,13 +236,12 @@
   window.mockApiUtils = {
     isMockMode,
     enableMock: () => {
-      localStorage.setItem('mockApi', 'true');
-      log('success', '模拟模式已启用，请刷新页面');
+      localStorage.setItem("mockApi", "true");
+      log("success", "模拟模式已启用，请刷新页面");
     },
     disableMock: () => {
-      localStorage.removeItem('mockApi');
-      log('info', '模拟模式已禁用，请刷新页面');
-    }
+      localStorage.removeItem("mockApi");
+      log("info", "模拟模式已禁用，请刷新页面");
+    },
   };
-
 })();
