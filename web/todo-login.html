@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO 登录 - Learn4Go</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background: #f8fafc; }
+        .card { border: 1px solid #e2e8f0; box-shadow: 0 6px 18px rgba(15,23,42,0.08); }
+        .btn-primary { background: #0ea5e9; border: none; }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
+    <div class="card p-4" style="width: 420px;">
+    <h4 class="mb-3">🔐 TODO API 登录</h4>
+    <p class="text-muted mb-2">演示前端与刷新令牌联动。默认账户：admin@example.com / admin123</p>
+    <div class="alert alert-info py-2 px-3">
+        需要后端 <code>cmd/todoapi</code> 运行（可执行 <code>./start-local.sh</code>）。本页不启用 mock；如需 mock，请改用 <code>login.html?mock=true</code>。
+    </div>
+    <div class="mb-3">
+        <label class="form-label">邮箱</label>
+        <input id="email" type="email" class="form-control" placeholder="you@example.com" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">密码</label>
+        <input id="password" type="password" class="form-control" placeholder="••••••••" required>
+    </div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="form-text" id="status-text">尚未登录</div>
+        <button id="logout-btn" class="btn btn-outline-secondary btn-sm" type="button">退出</button>
+    </div>
+    <button id="login-btn" class="btn btn-primary w-100 mb-3" type="button">登录并获取 Token</button>
+    <div class="alert alert-danger d-none" id="error-box"></div>
+    <div class="alert alert-success d-none" id="success-box"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="auth-helper.js"></script>
+<script>
+    const api = window.AppConfig?.todoApiBaseUrl || '';
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const errBox = document.getElementById('error-box');
+    const okBox = document.getElementById('success-box');
+    const statusText = document.getElementById('status-text');
+
+    function setStatus(text, isError=false) {
+        statusText.textContent = text;
+        errBox.classList.toggle('d-none', !isError);
+        errBox.textContent = isError ? text : '';
+    }
+
+    async function login() {
+        errBox.classList.add('d-none');
+        okBox.classList.add('d-none');
+        loginBtn.disabled = true;
+        loginBtn.textContent = '登录中...';
+        try {
+            const resp = await fetch(`${api}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                setStatus(data.error || '登录失败', true);
+                return;
+            }
+            AuthClient.setTokens(data.token, data.refresh_token);
+            okBox.textContent = `登录成功，角色: ${data.user.role}`;
+            okBox.classList.remove('d-none');
+            setStatus(`Access 过期：${data.expires_in}s，Refresh 过期：${data.refresh_expires_in}s`);
+        } catch (e) {
+            setStatus('网络异常，检查后端是否运行', true);
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = '登录并获取 Token';
+        }
+    }
+
+    async function fetchMe() {
+        const resp = await AuthClient.authFetch(`${api}/todos`, { method: 'GET' });
+        const data = await resp.json();
+        if (resp.ok) {
+            okBox.textContent = `已获取 TODO 列表，条目数: ${data.length}`;
+            okBox.classList.remove('d-none');
+            setStatus('Token 有效');
+        } else {
+            setStatus(data.error || '获取失败', true);
+        }
+    }
+
+    loginBtn.addEventListener('click', login);
+    logoutBtn.addEventListener('click', () => {
+        AuthClient.clear();
+        setStatus('已退出，缓存清空');
+        okBox.classList.add('d-none');
+    });
+
+    // 页面加载后尝试直接调用受保护接口，若 401 将自动刷新
+    fetchMe().catch(() => setStatus('尚未登录'));
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+  title: Learn4Go TODO API
+  version: "1.1.0"
+  description: >
+    JWT + RBAC + Refresh Token 示例接口。默认账户：
+    admin@example.com/admin123, user@example.com/user123, demo@example.com/demo123
+servers:
+  - url: http://localhost:8080
+paths:
+  /register:
+    post:
+      summary: 注册新用户（默认角色 user）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        "201":
+          description: created
+        "409":
+          description: email already exists
+  /login:
+    post:
+      summary: 登录并获取 access/refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  expires_in: { type: integer }
+                  refresh_token: { type: string }
+                  refresh_expires_in: { type: integer }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: integer }
+                      email: { type: string }
+                      role: { type: string }
+        "429":
+          description: account locked
+  /refresh:
+    post:
+      summary: 使用 refresh token 获取新 access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200": { description: rotated tokens }
+        "401": { description: invalid or expired refresh }
+  /todos:
+    get:
+      summary: 查询 TODO 列表（角色决定可见范围）
+      security:
+        - bearerAuth: []
+      responses:
+        "200": { description: ok }
+        "401": { description: unauthorized }
+    post:
+      summary: 新建 TODO（写入当前用户）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+      responses:
+        "201": { description: created }
+        "401": { description: unauthorized }
+  /todos/{id}:
+    put:
+      summary: 更新 TODO 完成状态
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                done: { type: boolean }
+      responses:
+        "200": { description: ok }
+        "403": { description: forbidden }
+        "401": { description: unauthorized }
+    delete:
+      summary: 删除 TODO
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: no content }
+        "403": { description: forbidden }
+        "401": { description: unauthorized }
+  /healthz:
+    get:
+      summary: 健康检查
+      responses:
+        "200": { description: ok }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

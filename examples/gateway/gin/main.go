@@ -24,6 +24,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,10 +38,18 @@ type BackendConfig struct {
 	Timeout time.Duration
 }
 
-// 后端服务配置表
+// getEnv 获取环境变量，支持默认值
+func getEnv(key, defaultVal string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return defaultVal
+}
+
+// 后端服务配置表（支持环境变量覆盖）
 var backends = map[string]BackendConfig{
-	"todos": {Name: "TODO API", Target: "http://localhost:8080", Timeout: 10 * time.Second},
-	"users": {Name: "User API", Target: "http://localhost:8081", Timeout: 10 * time.Second},
+	"todos": {Name: "TODO API", Target: getEnv("TODO_API_URL", "http://localhost:8080"), Timeout: 10 * time.Second},
+	"users": {Name: "User API", Target: getEnv("USER_API_URL", "http://localhost:8081"), Timeout: 10 * time.Second},
 }
 
 // LoggerMiddleware Gin 日志中间件
@@ -161,6 +171,11 @@ func createReverseProxy(target string) gin.HandlerFunc {
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
+		// 剥离 /api 前缀，保留资源路径
+		// 例如：/api/todos -> /todos, /api/todos/123 -> /todos/123
+		if strings.HasPrefix(req.URL.Path, "/api/") {
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/api")
+		}
 		req.Header.Set("X-Forwarded-By", "Learn4Go-Gin-Gateway")
 		req.Host = targetURL.Host
 	}
@@ -187,6 +202,16 @@ func setupRouter() *gin.Engine {
 	r.Use(gin.Recovery()) // 恢复 panic
 	r.Use(CORSMiddleware())
 	r.Use(LoggerMiddleware())
+
+	// 根路径说明，避免裸访问 404
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "ok",
+			"message": "Learn4Go API Gateway",
+			"version": "1.0",
+			"routes":  []string{"/health", "/api/todos", "/api/users"},
+		})
+	})
 
 	// 健康检查（无需认证）
 	r.GET("/health", func(c *gin.Context) {
@@ -224,14 +249,15 @@ func setupRouter() *gin.Engine {
 func main() {
 	r := setupRouter()
 
+	addr := getEnv("GATEWAY_ADDR", ":8888")
 	server := &http.Server{
-		Addr:         ":8888",
+		Addr:         addr,
 		Handler:      r,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
-	log.Println("Gin API 网关启动，监听 :8888")
+	log.Printf("Gin API 网关启动，监听 %s", addr)
 	log.Println("后端服务映射:")
 	for name, cfg := range backends {
 		log.Printf("  /api/%s -> %s (%s)", name, cfg.Target, cfg.Name)

@@ -151,6 +151,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="index.html">首页</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="todo-login.html">登录演示</a>
+                    </li>
                 </ul>
                 <div class="d-flex align-items-center">
                     <span class="text-muted small me-2">服务状态:</span>
@@ -221,6 +224,38 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card card-project h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">🔐 安全演示</h5>
+                                    <p class="card-text text-muted">体验 JWT + RBAC + Refresh 自动刷新流程。</p>
+                                    <ul class="small text-muted mb-3">
+                                        <li>默认账户：admin@example.com / admin123</li>
+                                        <li>自动处理 401 → refresh → 重试</li>
+                                        <li>后端未启动时：运行 <code>./start-local.sh</code></li>
+                                        <li>需要真实后端或使用 Mock（login.html?mock=true）</li>
+                                    </ul>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a class="btn btn-primary btn-sm" href="todo-login.html">真实后端</a>
+                                        <a class="btn btn-outline-secondary btn-sm" href="login.html?mock=true">Mock 演示</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card card-project h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">🧱 TinyGee 框架</h5>
+                                    <p class="card-text text-muted">仓库内手撸的最小 Web 框架：路由、中间件、模板、JWT/RBAC、限流。</p>
+                                    <ul class="small text-muted mb-3">
+                                        <li>文档：<code>docs/tinygee/quickstart.md</code></li>
+                                        <li>Demo：<code>go run ./cmd/tinygee-demo --port :9999</code></li>
+                                        <li>示例：查看下方示例列表（TinyGee 标签）</li>
+                                    </ul>
+                                    <a class="btn btn-outline-primary btn-sm" href="javascript:void(0)" onclick="copyToClipboard('go run ./cmd/tinygee-demo --port :9999', this)">复制 Demo 命令</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -228,6 +263,14 @@
 
                 <h4>可运行示例</h4>
                 <p class="text-muted">这些示例可以直接运行查看 Go 代码效果。</p>
+                <p class="small text-muted">标记说明：<span class="badge bg-info text-dark">🌐 需外网/httpbin</span> <span class="badge bg-secondary">本地</span> <span class="badge bg-warning text-dark">Mock</span></p>
+                <div class="btn-group mb-3" role="group" aria-label="示例过滤">
+                    <button class="btn btn-sm btn-outline-primary active" data-filter="all" onclick="setExampleFilter('all', this)">全部</button>
+                    <button class="btn btn-sm btn-outline-primary" data-filter="local" onclick="setExampleFilter('local', this)">本地</button>
+                    <button class="btn btn-sm btn-outline-primary" data-filter="network" onclick="setExampleFilter('network', this)">需外网</button>
+                    <button class="btn btn-sm btn-outline-primary" data-filter="mock" onclick="setExampleFilter('mock', this)">Mock</button>
+                    <button class="btn btn-sm btn-outline-primary" data-filter="tinygee" onclick="setExampleFilter('tinygee', this)">TinyGee</button>
+                </div>
                 <div class="list-group example-list" id="example-list"></div>
             </main>
         </div>
@@ -238,10 +281,19 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 服务配置
+            // 服务配置（Docker 和本地开发使用不同的健康检查端点）
+            const isDocker = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
             const services = {
-                todoApi: { url: window.AppConfig?.todoApiBaseUrl || 'http://127.0.0.1:8080', status: 'checking' },
-                gateway: { url: window.AppConfig?.gatewayUrl || 'http://127.0.0.1:8888', status: 'checking' }
+                todoapi: {
+                    url: isDocker ? '/api/todos' : (window.AppConfig?.todoApiBaseUrl || 'http://127.0.0.1:8080'),
+                    healthUrl: isDocker ? '/api/todos' : 'http://127.0.0.1:8080/healthz',
+                    status: 'checking'
+                },
+                gateway: {
+                    url: isDocker ? '/api' : (window.AppConfig?.gatewayUrl || 'http://127.0.0.1:8888'),
+                    healthUrl: isDocker ? '/health' : 'http://127.0.0.1:8888/health',
+                    status: 'checking'
+                }
             };
 
             // 章节数据
@@ -275,14 +327,28 @@
             ];
 
             const examples = [
-                { name: "Hello World", file: "examples/hello/main.go", cmd: "go run ./examples/hello", desc: "最简单的Go程序" },
-                { name: "FizzBuzz", file: "examples/fizzbuzz/main.go", cmd: "go run ./examples/fizzbuzz", desc: "经典编程练习" },
-                { name: "Worker Pool", file: "examples/workerpool/main.go", cmd: "go run ./examples/workerpool", desc: "并发任务池模式" },
-                { name: "gRPC Server", file: "examples/grpc/server/main.go", cmd: "go run ./examples/grpc/server", desc: "gRPC服务端示例" },
-                { name: "gRPC Client", file: "examples/grpc/client/main.go", cmd: "go run ./examples/grpc/client", desc: "gRPC客户端示例" },
-                { name: "Gateway (stdlib)", file: "examples/gateway/stdlib/main.go", cmd: "go run ./examples/gateway/stdlib", desc: "标准库反向代理" },
-                { name: "Gateway (Gin)", file: "examples/gateway/gin/main.go", cmd: "go run ./examples/gateway/gin", desc: "Gin框架网关" }
+                { name: "Hello World", file: "examples/hello/main.go", cmd: "go run ./examples/hello", desc: "最简单的Go程序", network: false, mock: false },
+                { name: "FizzBuzz", file: "examples/fizzbuzz/main.go", cmd: "go run ./examples/fizzbuzz", desc: "经典编程练习", network: false, mock: false },
+                { name: "Worker Pool", file: "examples/workerpool/main.go", cmd: "go run ./examples/workerpool", desc: "并发任务池模式", network: false, mock: false },
+                { name: "gRPC Server", file: "examples/grpc/server/main.go", cmd: "go run ./examples/grpc/server", desc: "gRPC服务端示例", network: false, mock: false },
+                { name: "gRPC Client", file: "examples/grpc/client/main.go", cmd: "go run ./examples/grpc/client", desc: "gRPC客户端示例", network: false, mock: false },
+                { name: "Gateway (stdlib)", file: "examples/gateway/stdlib/main.go", cmd: "go run ./examples/gateway/stdlib", desc: "标准库反向代理", network: false, mock: false },
+                { name: "Gateway (Gin)", file: "examples/gateway/gin/main.go", cmd: "go run ./examples/gateway/gin", desc: "Gin框架网关", network: false, mock: false },
+                { name: "HTTP Trace", file: "examples/java_compare/httptrace/main.go", cmd: "go run ./examples/java_compare/httptrace", desc: "httptrace 观测 DNS/连接/首字节（需 httpbin）", network: true, mock: false },
+                { name: "URL Encode", file: "examples/java_compare/urlencode/main.go", cmd: "go run ./examples/java_compare/urlencode", desc: "net/url 编解码，对照 URLEncoder", network: false, mock: false },
+                { name: "Ticker 限速", file: "examples/java_compare/ticker_rate_limit/main.go", cmd: "go run ./examples/java_compare/ticker_rate_limit", desc: "time.Ticker 节流，本地运行", network: false, mock: false },
+                { name: "中间件链", file: "examples/java_compare/http_middleware/main.go", cmd: "go run ./examples/java_compare/http_middleware", desc: "net/http 中间件链，本地", network: false, mock: false },
+                { name: "TinyGee Day1", file: "examples/tinygee/day1/main.go", cmd: "go run ./examples/tinygee/day1", desc: "TinyGee 基础路由与 JSON/String", network: false, mock: false, tinygee: true },
+                { name: "TinyGee 路由动态", file: "examples/tinygee/day3/main.go", cmd: "go run ./examples/tinygee/day3", desc: ":param 与 *filepath 动态路由", network: false, mock: false, tinygee: true },
+                { name: "TinyGee 中间件", file: "examples/tinygee/day5/main.go", cmd: "go run ./examples/tinygee/day5", desc: "分组+中间件链", network: false, mock: false, tinygee: true },
+                { name: "TinyGee 模板/静态", file: "examples/tinygee/day6/main.go", cmd: "go run ./examples/tinygee/day6", desc: "模板渲染与静态文件", network: false, mock: false, tinygee: true },
+                { name: "TinyGee Recover", file: "examples/tinygee/day7/main.go", cmd: "go run ./examples/tinygee/day7", desc: "Panic Recover 演示", network: false, mock: false, tinygee: true },
+                { name: "TinyGee JWT/RBAC", file: "examples/tinygee/day9auth/main.go", cmd: "go run ./examples/tinygee/day9auth", desc: "JWT + RBAC 中间件示例", network: false, mock: false, tinygee: true },
+                { name: "TinyGee 限流", file: "examples/tinygee/day9rl/main.go", cmd: "go run ./examples/tinygee/day9rl", desc: "滑动窗口限流演示", network: false, mock: false, tinygee: true },
+                { name: "Login Mock 演示", file: "web/login.html?mock=true", cmd: "open http://localhost:8000/login.html?mock=true", desc: "前端 Mock 登录演示，无需后端", network: false, mock: true }
             ];
+
+            let exampleFilter = 'all';
 
             // DOM 元素
             const chapterList = document.getElementById('chapter-list');
@@ -310,12 +376,15 @@
                     try {
                         const controller = new AbortController();
                         setTimeout(() => controller.abort(), 2000);
-                        await fetch(service.url, { method: 'GET', mode: 'no-cors', signal: controller.signal });
+                        const fetchOptions = isDocker
+                            ? { method: 'GET', signal: controller.signal }
+                            : { method: 'GET', mode: 'no-cors', signal: controller.signal };
+                        await fetch(service.healthUrl, fetchOptions);
                         service.status = 'online';
-                        updateBadge(`status-${key.toLowerCase()}`, 'online');
+                        updateBadge(`status-${key}`, 'online');
                     } catch (e) {
                         service.status = 'offline';
-                        updateBadge(`status-${key.toLowerCase()}`, 'offline');
+                        updateBadge(`status-${key}`, 'offline');
                     }
                 }
             }
@@ -376,13 +445,31 @@
                 });
             }
 
+            function setExampleFilter(filter, btn) {
+                exampleFilter = filter;
+                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                renderExamples();
+            }
+
             function renderExamples() {
                 exampleList.innerHTML = '';
                 examples.forEach(example => {
+                    if (exampleFilter === 'local' && example.network) return;
+                    if (exampleFilter === 'network' && !example.network) return;
+                    if (exampleFilter === 'mock' && !example.mock) return;
+                    if (exampleFilter === 'tinygee' && !example.tinygee) return;
+                    let badge = example.network ? '<span class="badge bg-info text-dark ms-1">🌐</span>' : '<span class="badge bg-secondary ms-1">本地</span>';
+                    if (example.mock) {
+                        badge += '<span class="badge bg-warning text-dark ms-1">Mock</span>';
+                    }
+                    if (example.tinygee) {
+                        badge += '<span class="badge bg-dark ms-1">TinyGee</span>';
+                    }
                     exampleList.innerHTML += `
                         <div class="list-group-item">
                             <div class="flex-grow-1">
-                                <h6 class="mb-1">${example.name}</h6>
+                                <h6 class="mb-1">${example.name} ${badge}</h6>
                                 <small class="text-muted d-block">${example.desc}</small>
                                 <code class="small">${example.file}</code>
                             </div>

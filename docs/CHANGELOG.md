@@ -1,0 +1,236 @@
+# 变更日志
+
+本文档记录项目的重要变更和版本更新。
+
+## [v1.1.0] - 2025-12-05
+
+### 🎉 新增功能
+
+#### JWT认证系统
+- ✅ 用户注册接口（`POST /register`）
+  - 邮箱唯一性验证
+  - bcrypt密码加密（cost=10）
+  - 自动生成用户ID
+
+- ✅ 用户登录接口（`POST /login`）
+  - JWT token生成（HS256算法）
+  - Token有效期24小时
+  - 返回用户信息和过期时间
+
+- ✅ API安全保护
+  - 认证中间件保护所有`/todos*`路径
+  - Token验证和用户ID提取
+  - 公开路径白名单（/, /healthz, /register, /login）
+  - 统一401错误响应
+
+#### 速率限制
+- ✅ 基于内存的滑动窗口限流
+  - 可配置时间窗口和请求限制
+  - 自动清理过期客户端信息
+  - 支持X-Forwarded-For头
+
+#### Mock数据
+- ✅ 预置3个测试用户账户
+  - `admin@example.com` / `admin123`
+  - `user@example.com` / `user123`
+  - `demo@example.com` / `demo123`
+
+### 🏗️ 架构改进
+
+#### 代码结构
+- ✅ 接口化设计（`UserStore` interface）
+- ✅ 选项模式配置（`WithJWT`, `WithUserStore`, `WithRateLimiter`）
+- ✅ 中间件链式调用
+- ✅ 并发安全（`sync.Mutex`保护）
+
+#### 新增文件
+```
+internal/todo/
+├── auth.go          # JWT管理和认证中间件
+├── user_store.go    # 用户存储接口和内存实现
+└── ratelimit.go     # 速率限制器
+```
+
+#### 修改文件
+```
+internal/todo/
+├── handler.go       # 添加注册/登录路由，集成认证中间件
+go.mod               # 添加JWT和bcrypt依赖
+```
+
+### 📝 文档更新
+
+#### 新增文档
+- ✅ `docs/AUTH.md` - JWT认证系统完整文档
+  - 认证流程说明
+  - API使用示例
+  - 安全特性说明
+  - Java开发者对比
+  - 后续优化计划
+
+#### 更新文档
+- ✅ `docs/API.md` - API接口文档
+  - 添加认证说明章节
+  - 更新所有接口示例（含Authorization头）
+  - 添加完整认证工作流
+  - 更新错误处理说明
+
+### 🔒 安全特性
+
+#### 密码安全
+- ✅ bcrypt加密（防彩虹表攻击）
+- ✅ 密码不在响应中返回（`json:"-"`）
+- ✅ 登录失败统一错误信息（防用户枚举）
+
+#### Token安全
+- ✅ HS256签名算法
+- ✅ 24小时过期时间
+- ✅ 签名密钥可配置
+- ⚠️ 生产环境需更换默认密钥
+
+#### API保护
+- ✅ 所有TODO API需要认证
+- ✅ Token验证失败返回401
+- ✅ 用户ID存储在请求上下文中
+
+### 🧪 测试验证
+
+#### 功能测试
+```bash
+# 1. 登录成功
+curl -X POST http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"admin123"}'
+# ✅ 返回: {"token":"eyJ...","expires_in":86400,"user":{...}}
+
+# 2. 未认证访问被拒绝
+curl http://localhost:8080/todos
+# ✅ 返回: {"error":"authorization required"}
+
+# 3. 使用token成功访问
+curl http://localhost:8080/todos -H "Authorization: Bearer $TOKEN"
+# ✅ 返回: []
+
+# 4. 创建TODO成功
+curl -X POST http://localhost:8080/todos \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"测试JWT认证"}'
+# ✅ 返回: {"id":180457,"title":"测试JWT认证",...}
+```
+
+### 📊 代码统计
+
+- **新增文件**: 4个（3个Go文件 + 1个文档）
+- **修改文件**: 3个
+- **新增代码**: 约600行
+- **文档更新**: 约400行
+- **测试覆盖**: 手动功能测试通过
+
+### 🎯 技术亮点
+
+#### 1. 安全性
+- bcrypt密码加密（防彩虹表攻击）
+- JWT签名验证（防篡改）
+- 统一错误信息（防用户枚举）
+- 密码不在响应中返回
+
+#### 2. 可扩展性
+- UserStore接口支持多种存储实现
+- 选项模式便于功能扩展
+- 中间件链易于添加新功能
+
+#### 3. 开发友好
+- Mock数据便于测试
+- 详细的文档和示例
+- Java开发者对比说明
+
+### 🔄 后续优化计划
+
+#### 短期（1-2周）
+- [ ] Token刷新机制（Refresh Token）
+- [ ] 登录失败次数限制
+- [ ] 密码强度验证
+- [ ] 邮箱格式验证
+
+#### 中期（3-4周）
+- [ ] RBAC权限控制
+- [ ] 数据库用户存储（MySQL/PostgreSQL）
+- [ ] Redis速率限制
+- [ ] 会话管理（黑名单）
+
+#### 长期（1-2个月）
+- [ ] OAuth2集成（Google/GitHub）
+- [ ] 双因素认证（2FA）
+- [ ] 单点登录（SSO）
+- [ ] 审计日志
+
+### 🐛 已知问题
+
+- ⚠️ 默认JWT密钥需要在生产环境更换
+- ⚠️ 内存存储不适合生产环境（重启丢失数据）
+- ⚠️ 速率限制基于内存（不支持分布式）
+
+### 💡 使用建议
+
+#### 开发环境
+```bash
+# 使用默认配置启动
+go run ./cmd/todoapi
+
+# 使用mock用户登录
+curl -X POST http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"admin123"}'
+```
+
+#### 生产环境
+```bash
+# 配置JWT密钥
+export JWT_SECRET="your-production-secret-key-min-32-chars"
+export JWT_TTL="24h"
+
+# 使用数据库存储
+export TODO_STORAGE="mysql"
+export TODO_DB_HOST="your-db-host"
+export TODO_DB_USER="your-db-user"
+export TODO_DB_PASS="your-db-password"
+
+go run ./cmd/todoapi
+```
+
+### 📚 相关文档
+
+- [认证系统文档](AUTH.md) - JWT认证详细说明
+- [API接口文档](API.md) - 完整API参考
+- [项目计划](../plan.md) - 后续开发计划
+
+---
+
+## [v1.0.0] - 2024-01-15
+
+### 初始版本
+
+#### 核心功能
+- ✅ TODO CRUD操作
+- ✅ 内存/SQLite/MySQL存储支持
+- ✅ gRPC示例
+- ✅ API网关示例
+- ✅ Docker Compose部署
+- ✅ Redis缓存集成
+- ✅ MinIO对象存储集成
+
+#### 文档
+- ✅ README.md
+- ✅ API.md
+- ✅ FRONTEND.md
+- ✅ Java vs Go速查表
+
+---
+
+**版本说明**：
+- 主版本号：重大架构变更或不兼容更新
+- 次版本号：新功能添加
+- 修订号：Bug修复和小改进
+
+**最后更新**: 2025-12-05

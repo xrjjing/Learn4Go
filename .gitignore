@@ -53,3 +53,26 @@ bin/
 logs.zip
 web/dist/
 /.gocache/
+
+# Go 编译的二进制文件（根目录）
+/client
+/server
+/gin
+/gateway
+/todoapi
+
+# 本地开发日志目录
+logs/
+*.log
+
+# 进程 ID 文件
+.pids
+
+# SQLite 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 临时测试文件
+/tmp/
+nohup.out
