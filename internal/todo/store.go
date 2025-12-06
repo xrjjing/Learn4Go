@@ -20,6 +20,7 @@ type Todo struct {
 type TodoStore interface {
 	List() ([]Todo, error)
 	ListByUser(userID uint) ([]Todo, error)
+	ListPaged(page, pageSize int) ([]Todo, int, error) // 分页查询，返回数据和总数
 	Create(title string, userID uint) (Todo, error)
 	Get(id int) (Todo, bool, error)
 	Toggle(id int, done bool) (Todo, bool, error)
@@ -59,6 +60,40 @@ func (s *Store) ListByUser(userID uint) ([]Todo, error) {
 		}
 	}
 	return out, nil
+}
+
+// ListPaged 分页返回待办列表
+// page 从 1 开始，pageSize 为每页条数
+// 返回当前页数据和总条数
+func (s *Store) ListPaged(page, pageSize int) ([]Todo, int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// 收集所有项目
+	all := make([]Todo, 0, len(s.items))
+	for _, v := range s.items {
+		all = append(all, v)
+	}
+	total := len(all)
+
+	// 计算偏移
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	offset := (page - 1) * pageSize
+	if offset >= total {
+		return []Todo{}, total, nil
+	}
+
+	end := offset + pageSize
+	if end > total {
+		end = total
+	}
+
+	return all[offset:end], total, nil
 }
 
 // Create 新建待办。

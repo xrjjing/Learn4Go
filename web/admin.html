@@ -459,89 +459,92 @@
           </section>
 
           <!-- Users Panel -->
-          <section id="users" class="content-panel">
+          <section id="users" class="content-panel" aria-labelledby="users-heading">
             <div class="table-container">
               <div class="table-header">
-                <h2>User Management</h2>
+                <h2 id="users-heading">User Management</h2>
                 <button
                   class="btn btn-primary btn-sm"
                   onclick="showCreateUserModal()"
+                  aria-label="Create new user"
                 >
                   + Create User
                 </button>
               </div>
-              <table class="data-table">
+              <table class="data-table" role="grid" aria-labelledby="users-heading">
                 <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Active</th>
-                    <th>Superuser</th>
-                    <th>Roles</th>
-                    <th>Actions</th>
+                  <tr role="row">
+                    <th scope="col">ID</th>
+                    <th scope="col">Username</th>
+                    <th scope="col">Active</th>
+                    <th scope="col">Superuser</th>
+                    <th scope="col">Roles</th>
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
-                <tbody id="users-table"></tbody>
+                <tbody id="users-table" role="rowgroup"></tbody>
               </table>
             </div>
           </section>
 
           <!-- Roles Panel -->
-          <section id="roles" class="content-panel">
+          <section id="roles" class="content-panel" aria-labelledby="roles-heading">
             <div class="table-container">
               <div class="table-header">
-                <h2>Role Management</h2>
+                <h2 id="roles-heading">Role Management</h2>
                 <button
                   class="btn btn-primary btn-sm"
                   onclick="showCreateRoleModal()"
+                  aria-label="Create new role"
                 >
                   + Create Role
                 </button>
               </div>
-              <table class="data-table">
+              <table class="data-table" role="grid" aria-labelledby="roles-heading">
                 <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Permissions</th>
+                  <tr role="row">
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Permissions</th>
                   </tr>
                 </thead>
-                <tbody id="roles-table"></tbody>
+                <tbody id="roles-table" role="rowgroup"></tbody>
               </table>
             </div>
           </section>
 
           <!-- Permissions Panel -->
-          <section id="permissions" class="content-panel">
+          <section id="permissions" class="content-panel" aria-labelledby="permissions-heading">
             <div class="table-container">
-              <div class="table-header"><h2>Permission List</h2></div>
-              <table class="data-table">
+              <div class="table-header"><h2 id="permissions-heading">Permission List</h2></div>
+              <table class="data-table" role="grid" aria-labelledby="permissions-heading">
                 <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Code</th>
-                    <th>Description</th>
+                  <tr role="row">
+                    <th scope="col">ID</th>
+                    <th scope="col">Code</th>
+                    <th scope="col">Description</th>
                   </tr>
                 </thead>
-                <tbody id="permissions-table"></tbody>
+                <tbody id="permissions-table" role="rowgroup"></tbody>
               </table>
             </div>
           </section>
 
           <!-- Logs Panel -->
-          <section id="logs" class="content-panel">
+          <section id="logs" class="content-panel" aria-labelledby="logs-heading">
             <div class="table-container">
               <div class="table-header">
-                <h2>Audit Logs</h2>
+                <h2 id="logs-heading">Audit Logs</h2>
                 <button
                   class="btn btn-secondary btn-sm"
                   onclick="loadAuditLogs()"
+                  aria-label="Refresh audit logs"
                 >
                   Refresh
                 </button>
               </div>
-              <pre id="log-viewer" class="log-viewer">
+              <pre id="log-viewer" class="log-viewer" role="log" aria-live="polite" aria-label="Audit log content">
 Loading audit logs...</pre
               >
             </div>

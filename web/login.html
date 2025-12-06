@@ -76,6 +76,8 @@
     <script src="config.js"></script>
 
     <script src="mock-api.js"></script>
+    <!-- 前端工具库 -->
+    <script src="js/utils.js"></script>
     <!-- ====================================================== -->
 
     <style>
@@ -326,10 +328,10 @@
     <div class="login-container">
       <div class="login-box">
         <div class="login-header">
-          <h1>Welcome Back</h1>
+          <h1 id="login-heading">Welcome Back</h1>
           <p>Sign in to access the Go Learning Platform</p>
         </div>
-        <form id="login-form">
+        <form id="login-form" aria-labelledby="login-heading">
           <div class="form-group">
             <label for="username">Username</label>
             <input
@@ -339,7 +341,10 @@
               required
               autocomplete="username"
               placeholder="admin"
+              aria-required="true"
+              aria-describedby="username-error"
             />
+            <div class="form-error" id="username-error" data-error="username" role="alert" aria-live="polite"></div>
           </div>
           <div class="form-group">
             <label for="password">Password</label>
@@ -350,12 +355,16 @@
               required
               autocomplete="current-password"
               placeholder="admin123"
+              minlength="6"
+              aria-required="true"
+              aria-describedby="password-error"
             />
+            <div class="form-error" id="password-error" data-error="password" role="alert" aria-live="polite"></div>
           </div>
-          <button type="submit" class="btn btn-primary" id="submit-btn">
+          <button type="submit" class="btn btn-primary" id="submit-btn" aria-busy="false">
             Login
           </button>
-          <div id="error-message"></div>
+          <div id="error-message" role="alert" aria-live="assertive"></div>
         </form>
         <div class="links">
           <p>Default: admin / admin123</p>
@@ -368,6 +377,8 @@
 
     <script>
       (() => {
+        const { Toast, Loading, FormValidator, i18n } = window.Learn4Go || {};
+
         // API Base URL - defaults to same origin for production, configurable for dev
         const API_BASE =
           window.AppConfig?.apiBaseUrl ?? window.API_BASE_URL ?? "";
@@ -406,10 +417,29 @@
 
         loginForm.addEventListener("submit", async (event) => {
           event.preventDefault();
+
+          // 表单验证 (P2-F1)
+          if (FormValidator) {
+            const { isValid } = FormValidator.validate(loginForm, {
+              username: ['required'],
+              password: ['required']
+            });
+            if (!isValid) {
+              Toast?.warning(i18n?.t('login.error.required') || 'Please fill in all fields');
+              return;
+            }
+          }
+
           errorMessage.style.display = "none";
           errorMessage.textContent = "";
-          submitBtn.disabled = true;
-          submitBtn.textContent = "Logging in...";
+
+          // 加载状态 (P2-F2)
+          if (Loading) {
+            Loading.setButton(submitBtn, true);
+          } else {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Logging in...";
+          }
 
           // Backend expects OAuth2 form data (application/x-www-form-urlencoded)
           const formData = new URLSearchParams();
@@ -434,6 +464,7 @@
             if (response.ok && body.code === "OK" && body.data?.access_token) {
               // Store token
               localStorage.setItem("accessToken", body.data.access_token);
+              Toast?.success(i18n?.t('common.success') || 'Login successful');
 
               // Check if user is superuser to redirect to admin
               try {
@@ -453,18 +484,25 @@
                 window.location.href = "index.html";
               }
             } else {
-              errorMessage.textContent =
-                body.message || body.detail || "Login failed";
+              const errMsg = body.message || body.detail || "Login failed";
+              Toast?.error(errMsg);
+              errorMessage.textContent = errMsg;
               errorMessage.style.display = "block";
             }
           } catch (error) {
             console.error("Login Error:", error);
-            errorMessage.textContent =
+            const errMsg = i18n?.t('login.error.network') ||
               "Connection error. Please ensure RBAC service is running on port 8000.";
+            Toast?.error(errMsg);
+            errorMessage.textContent = errMsg;
             errorMessage.style.display = "block";
           } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Login";
+            if (Loading) {
+              Loading.setButton(submitBtn, false);
+            } else {
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Login";
+            }
           }
         });
       })();

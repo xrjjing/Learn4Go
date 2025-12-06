@@ -34,7 +34,7 @@
 
 ### 认证说明
 
-**重要**: 从 v1.1.0 开始，所有 `/todos*` 接口需要 JWT 认证。
+**重要**: 从 v1.1.0 开始，所有 `/v1/todos*` 接口需要 JWT 认证。
 
 **认证方式**:
 
@@ -42,7 +42,7 @@
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
-**获取 Token**: 通过 `/login` 接口登录获取 JWT token。
+**获取 Token**: 通过 `/v1/login` 接口登录获取 JWT token。
 
 **Mock 用户**（用于测试）:
 
@@ -61,7 +61,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 **请求**
 
 ```http
-POST /register
+POST /v1/register
 Content-Type: application/json
 
 {

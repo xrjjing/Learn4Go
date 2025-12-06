@@ -39,6 +39,11 @@ type DBConfig struct {
 	Password string
 	DBName   string
 	SQLite   string // SQLite 文件路径
+	// 连接池配置
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
 }
 
 // NewDBStore 创建数据库存储
@@ -66,6 +71,35 @@ func NewDBStore(cfg DBConfig) (*DBStore, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// 配置连接池
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("获取底层连接失败: %w", err)
+	}
+
+	// 设置连接池参数（使用合理默认值）
+	maxOpen := cfg.MaxOpenConns
+	if maxOpen <= 0 {
+		maxOpen = 25
+	}
+	maxIdle := cfg.MaxIdleConns
+	if maxIdle <= 0 {
+		maxIdle = 10
+	}
+	maxLifetime := cfg.ConnMaxLifetime
+	if maxLifetime <= 0 {
+		maxLifetime = 5 * time.Minute
+	}
+	maxIdleTime := cfg.ConnMaxIdleTime
+	if maxIdleTime <= 0 {
+		maxIdleTime = 2 * time.Minute
+	}
+
+	sqlDB.SetMaxOpenConns(maxOpen)
+	sqlDB.SetMaxIdleConns(maxIdle)
+	sqlDB.SetConnMaxLifetime(maxLifetime)
+	sqlDB.SetConnMaxIdleTime(maxIdleTime)
 
 	// 自动迁移
 	if err := db.AutoMigrate(&TodoModel{}); err != nil {
@@ -101,6 +135,15 @@ func (s *DBStore) Close() error {
 	return sqlDB.Close()
 }
 
+// Ping 检查数据库连接是否可用
+func (s *DBStore) Ping() error {
+	sqlDB, err := s.db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Ping()
+}
+
 // List 返回全部待办
 func (s *DBStore) List() ([]Todo, error) {
 	var models []TodoModel
@@ -129,6 +172,33 @@ func (s *DBStore) ListByUser(userID uint) ([]Todo, error) {
 		todos[i] = modelToTodo(m)
 	}
 	return todos, nil
+}
+
+// ListPaged 分页返回待办列表
+func (s *DBStore) ListPaged(page, pageSize int) ([]Todo, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var total int64
+	if err := s.db.Model(&TodoModel{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var models []TodoModel
+	offset := (page - 1) * pageSize
+	if err := s.db.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&models).Error; err != nil {
+		return nil, 0, err
+	}
+
+	todos := make([]Todo, len(models))
+	for i, m := range models {
+		todos[i] = modelToTodo(m)
+	}
+	return todos, int(total), nil
 }
 
 // Create 新建待办

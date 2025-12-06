@@ -3,13 +3,19 @@ package todo
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+// 初始化结构化日志
+var slogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	Level: slog.LevelInfo,
+}))
 
 // Server 封装路由与存储。
 type Server struct {
@@ -132,10 +138,10 @@ func (s *Server) Handler() http.Handler {
 	// 基础路由处理
 	base := http.Handler(s.mux)
 
-	// 在认证之后，对 /todos* 路径统一应用 RBAC 授权中间件
+	// 在认证之后，对 /v1/todos* 路径统一应用 RBAC 授权中间件
 	rbacHandler := s.authzMiddleware(base)
 	rbacWrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/todos") {
+		if strings.HasPrefix(r.URL.Path, "/v1/todos") {
 			rbacHandler.ServeHTTP(w, r)
 			return
 		}
@@ -161,21 +167,42 @@ func (s *Server) routes() {
 		respondJSON(w, map[string]any{
 			"service":   "Learn4Go TODO API",
 			"version":   "1.0",
-			"endpoints": []string{"/todos", "/todos/{id}", "/healthz"},
+			"endpoints": []string{"/v1/todos", "/v1/todos/{id}", "/healthz"},
 		}, http.StatusOK)
 	})
 
 	s.mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		status := map[string]any{
+			"status": "ok",
+			"checks": map[string]string{},
+		}
+		checks := status["checks"].(map[string]string)
+
+		// 检查数据库连接（如果 store 支持 Ping）
+		if pinger, ok := s.store.(interface{ Ping() error }); ok {
+			if err := pinger.Ping(); err != nil {
+				checks["database"] = "unhealthy: " + err.Error()
+				status["status"] = "degraded"
+			} else {
+				checks["database"] = "healthy"
+			}
+		} else {
+			checks["database"] = "in-memory"
+		}
+
+		code := http.StatusOK
+		if status["status"] != "ok" {
+			code = http.StatusServiceUnavailable
+		}
+		respondJSON(w, status, code)
 	})
 
-	// 认证相关路由
-	s.mux.HandleFunc("/register", s.handleRegister)
-	s.mux.HandleFunc("/login", s.handleLogin)
-	s.mux.HandleFunc("/refresh", s.handleRefresh)
+	// 认证相关路由 (v1)
+	s.mux.HandleFunc("/v1/register", s.handleRegister)
+	s.mux.HandleFunc("/v1/login", s.handleLogin)
+	s.mux.HandleFunc("/v1/refresh", s.handleRefresh)
 
-	s.mux.HandleFunc("/todos", func(w http.ResponseWriter, r *http.Request) {
+	s.mux.HandleFunc("/v1/todos", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			// 根据用户角色控制可见范围
@@ -243,8 +270,8 @@ func (s *Server) routes() {
 		}
 	})
 
-	s.mux.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
-		idStr := r.URL.Path[len("/todos/"):]
+	s.mux.HandleFunc("/v1/todos/", func(w http.ResponseWriter, r *http.Request) {
+		idStr := r.URL.Path[len("/v1/todos/"):]
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			respondError(w, http.StatusBadRequest, "invalid id")
@@ -458,11 +485,32 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// 简易日志中间件
+// responseWriter 包装器，用于捕获响应状态码
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+// 结构化日志中间件
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, r)
-		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
+		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		next.ServeHTTP(wrapped, r)
+
+		slogger.Info("http request",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.Int("status", wrapped.statusCode),
+			slog.Duration("duration", time.Since(start)),
+			slog.String("remote_addr", r.RemoteAddr),
+			slog.String("user_agent", r.UserAgent()),
+		)
 	})
 }

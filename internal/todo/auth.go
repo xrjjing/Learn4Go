@@ -91,18 +91,18 @@ func GetUserID(ctx context.Context) (uint, bool) {
 	return userID, ok
 }
 
-// authMiddleware 保护 /todos* 路径。
+// authMiddleware 保护 /v1/todos* 路径。
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 公开路径
+		// 公开路径（无需认证）
 		if r.URL.Path == "/" || r.URL.Path == "/healthz" ||
-			r.URL.Path == "/register" || r.URL.Path == "/login" || r.URL.Path == "/refresh" {
+			r.URL.Path == "/v1/register" || r.URL.Path == "/v1/login" || r.URL.Path == "/v1/refresh" {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 需要认证的路径
-		if !strings.HasPrefix(r.URL.Path, "/todos") {
+		// 只对 /v1/todos 路径强制认证
+		if !strings.HasPrefix(r.URL.Path, "/v1/todos") {
 			next.ServeHTTP(w, r)
 			return
 		}
