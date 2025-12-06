@@ -13,10 +13,10 @@
 //   - 更好的性能（基于 httprouter）
 //
 // 运行方式：
-//   1. 安装 Gin: go get -u github.com/gin-gonic/gin
-//   2. 启动后端: go run ./cmd/todoapi
-//   3. 启动网关: go run ./examples/gateway/gin
-//   4. 访问: curl http://localhost:8888/api/todos
+//  1. 安装 Gin: go get -u github.com/gin-gonic/gin
+//  2. 启动后端: go run ./cmd/todoapi
+//  3. 启动网关: go run ./examples/gateway/gin
+//  4. 访问: curl http://localhost:8888/api/v1/todos
 package main
 
 import (
@@ -172,7 +172,7 @@ func createReverseProxy(target string) gin.HandlerFunc {
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
 		// 剥离 /api 前缀，保留资源路径
-		// 例如：/api/todos -> /todos, /api/todos/123 -> /todos/123
+		// 例如：/api/v1/todos -> /v1/todos, /api/v1/todos/123 -> /v1/todos/123
 		if strings.HasPrefix(req.URL.Path, "/api/") {
 			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/api")
 		}
@@ -209,7 +209,7 @@ func setupRouter() *gin.Engine {
 			"status":  "ok",
 			"message": "Learn4Go API Gateway",
 			"version": "1.0",
-			"routes":  []string{"/health", "/api/todos", "/api/users"},
+			"routes":  []string{"/health", "/api/v1/todos", "/api/v1/users"},
 		})
 	})
 
@@ -226,21 +226,17 @@ func setupRouter() *gin.Engine {
 	api.Use(AuthMiddleware())
 	api.Use(RateLimitMiddleware(100)) // 每秒 100 请求
 	{
-		// TODO API 代理
-		todos := api.Group("/todos")
-		{
-			todosProxy := createReverseProxy(backends["todos"].Target)
-			todos.Any("", todosProxy)
-			todos.Any("/*path", todosProxy)
-		}
+		// TODO API 代理：/api/v1/todos -> /v1/todos
+		todosProxy := createReverseProxy(backends["todos"].Target)
+		api.Any("/v1/todos", todosProxy)
+		api.Any("/v1/todos/*path", todosProxy)
+		// TODO 健康检查代理：/api/healthz -> /healthz
+		api.Any("/healthz", todosProxy)
 
-		// Users API 代理（示例）
-		users := api.Group("/users")
-		{
-			usersProxy := createReverseProxy(backends["users"].Target)
-			users.Any("", usersProxy)
-			users.Any("/*path", usersProxy)
-		}
+		// Users API 代理（示例）：/api/v1/users -> /v1/users
+		usersProxy := createReverseProxy(backends["users"].Target)
+		api.Any("/v1/users", usersProxy)
+		api.Any("/v1/users/*path", usersProxy)
 	}
 
 	return r
@@ -259,12 +255,11 @@ func main() {
 
 	log.Printf("Gin API 网关启动，监听 %s", addr)
 	log.Println("后端服务映射:")
-	for name, cfg := range backends {
-		log.Printf("  /api/%s -> %s (%s)", name, cfg.Target, cfg.Name)
-	}
+	log.Printf("  /api/v1/todos  -> %s (%s)", backends["todos"].Target, backends["todos"].Name)
+	log.Printf("  /api/v1/users  -> %s (%s)", backends["users"].Target, backends["users"].Name)
 	log.Println("\n测试命令:")
 	log.Println("  curl http://localhost:8888/health")
-	log.Println("  curl http://localhost:8888/api/todos")
+	log.Println("  curl http://localhost:8888/api/v1/todos")
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("服务器退出: %v", err)

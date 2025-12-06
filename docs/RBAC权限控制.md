@@ -71,23 +71,23 @@ func (m *RBACManager) CheckPermission(role Role, resource Resource, action Actio
 
 ```bash
 # 登录
-ADMIN_TOKEN=$(curl -s -X POST http://localhost:8080/login \
+ADMIN_TOKEN=$(curl -s -X POST http://localhost:8080/v1/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"admin@example.com","password":"admin123"}' \
   | jq -r '.token')
 
 # 创建TODO
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"title":"管理员任务"}'
 
 # 查看所有TODO（包括其他用户的）
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 
 # 删除任何TODO
-curl -X DELETE http://localhost:8080/todos/123 \
+curl -X DELETE http://localhost:8080/v1/todos/123 \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
@@ -95,23 +95,23 @@ curl -X DELETE http://localhost:8080/todos/123 \
 
 ```bash
 # 登录
-USER_TOKEN=$(curl -s -X POST http://localhost:8080/login \
+USER_TOKEN=$(curl -s -X POST http://localhost:8080/v1/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"user@example.com","password":"user123"}' \
   | jq -r '.token')
 
 # 创建TODO（自动关联到当前用户）
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $USER_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"title":"我的任务"}'
 
 # 查看TODO（只能看到自己的）
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $USER_TOKEN"
 
 # 尝试删除其他用户的TODO（会被拒绝）
-curl -X DELETE http://localhost:8080/todos/999 \
+curl -X DELETE http://localhost:8080/v1/todos/999 \
   -H "Authorization: Bearer $USER_TOKEN"
 # 返回: {"error":"you don't own this resource"}
 ```
@@ -120,17 +120,17 @@ curl -X DELETE http://localhost:8080/todos/999 \
 
 ```bash
 # 登录
-GUEST_TOKEN=$(curl -s -X POST http://localhost:8080/login \
+GUEST_TOKEN=$(curl -s -X POST http://localhost:8080/v1/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"demo@example.com","password":"demo123"}' \
   | jq -r '.token')
 
 # 查看所有TODO（可以看到）
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $GUEST_TOKEN"
 
 # 尝试创建TODO（会被拒绝）
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $GUEST_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"title":"访客任务"}'

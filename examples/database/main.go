@@ -2,7 +2,8 @@
 // 对应章节: 06_数据库访问.md
 //
 // 运行方式:
-//   go run ./examples/database
+//
+//	go run ./examples/database
 //
 // 本示例使用内存 SQLite，无需额外配置数据库
 package main

@@ -91,18 +91,13 @@ func GetUserID(ctx context.Context) (uint, bool) {
 	return userID, ok
 }
 
-// authMiddleware 保护 /v1/todos* 路径。
+// authMiddleware 统一处理需要认证的 API 请求。
+// 仅对少数公开端点放行，其余路径都要求携带 Bearer Token。
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 公开路径（无需认证）
-		if r.URL.Path == "/" || r.URL.Path == "/healthz" ||
-			r.URL.Path == "/v1/register" || r.URL.Path == "/v1/login" || r.URL.Path == "/v1/refresh" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// 只对 /v1/todos 路径强制认证
-		if !strings.HasPrefix(r.URL.Path, "/v1/todos") {
+		switch r.URL.Path {
+		case "/", "/healthz", "/v1/register", "/v1/login", "/v1/refresh":
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -459,7 +459,11 @@
           </section>
 
           <!-- Users Panel -->
-          <section id="users" class="content-panel" aria-labelledby="users-heading">
+          <section
+            id="users"
+            class="content-panel"
+            aria-labelledby="users-heading"
+          >
             <div class="table-container">
               <div class="table-header">
                 <h2 id="users-heading">User Management</h2>
@@ -471,14 +475,18 @@
                   + Create User
                 </button>
               </div>
-              <table class="data-table" role="grid" aria-labelledby="users-heading">
+              <table
+                class="data-table"
+                role="grid"
+                aria-labelledby="users-heading"
+              >
                 <thead>
                   <tr role="row">
                     <th scope="col">ID</th>
-                    <th scope="col">Username</th>
+                    <th scope="col">Email</th>
                     <th scope="col">Active</th>
                     <th scope="col">Superuser</th>
-                    <th scope="col">Roles</th>
+                    <th scope="col">Role</th>
                     <th scope="col">Actions</th>
                   </tr>
                 </thead>
@@ -488,7 +496,11 @@
           </section>
 
           <!-- Roles Panel -->
-          <section id="roles" class="content-panel" aria-labelledby="roles-heading">
+          <section
+            id="roles"
+            class="content-panel"
+            aria-labelledby="roles-heading"
+          >
             <div class="table-container">
               <div class="table-header">
                 <h2 id="roles-heading">Role Management</h2>
@@ -500,7 +512,11 @@
                   + Create Role
                 </button>
               </div>
-              <table class="data-table" role="grid" aria-labelledby="roles-heading">
+              <table
+                class="data-table"
+                role="grid"
+                aria-labelledby="roles-heading"
+              >
                 <thead>
                   <tr role="row">
                     <th scope="col">ID</th>
@@ -515,10 +531,20 @@
           </section>
 
           <!-- Permissions Panel -->
-          <section id="permissions" class="content-panel" aria-labelledby="permissions-heading">
+          <section
+            id="permissions"
+            class="content-panel"
+            aria-labelledby="permissions-heading"
+          >
             <div class="table-container">
-              <div class="table-header"><h2 id="permissions-heading">Permission List</h2></div>
-              <table class="data-table" role="grid" aria-labelledby="permissions-heading">
+              <div class="table-header">
+                <h2 id="permissions-heading">Permission List</h2>
+              </div>
+              <table
+                class="data-table"
+                role="grid"
+                aria-labelledby="permissions-heading"
+              >
                 <thead>
                   <tr role="row">
                     <th scope="col">ID</th>
@@ -532,7 +558,11 @@
           </section>
 
           <!-- Logs Panel -->
-          <section id="logs" class="content-panel" aria-labelledby="logs-heading">
+          <section
+            id="logs"
+            class="content-panel"
+            aria-labelledby="logs-heading"
+          >
             <div class="table-container">
               <div class="table-header">
                 <h2 id="logs-heading">Audit Logs</h2>
@@ -544,7 +574,13 @@
                   Refresh
                 </button>
               </div>
-              <pre id="log-viewer" class="log-viewer" role="log" aria-live="polite" aria-label="Audit log content">
+              <pre
+                id="log-viewer"
+                class="log-viewer"
+                role="log"
+                aria-live="polite"
+                aria-label="Audit log content"
+              >
 Loading audit logs...</pre
               >
             </div>
@@ -599,7 +635,7 @@ Loading audit logs...</pre
           .getElementById("logout-btn")
           ?.addEventListener("click", async () => {
             try {
-              await fetch(`${API_BASE}/auth/logout`, {
+              await fetch(`${API_BASE}/v1/logout`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
               });
@@ -609,6 +645,9 @@ Loading audit logs...</pre
           });
 
         // API Helper with unified response handling
+        // 兼容两种返回格式：
+        // 1) 统一包装: { code: "OK", data: {...} }
+        // 2) Go TODO API 原生 JSON: 直接返回对象或数组
         async function apiFetch(url, options = {}) {
           const headers = {
             Authorization: `Bearer ${token}`,
@@ -626,11 +665,21 @@ Loading audit logs...</pre
 
           const body = await response.json();
 
-          if (body.code !== "OK") {
-            throw new Error(body.message || "Request failed");
+          // HTTP 层失败优先使用后端提供的错误信息
+          if (!response.ok) {
+            throw new Error(body.error || body.message || "Request failed");
           }
 
-          return body.data;
+          // 兼容 Python/RBAC 风格的 {code,data} 包装
+          if (body && typeof body === "object" && "code" in body) {
+            if (body.code !== "OK") {
+              throw new Error(body.message || "Request failed");
+            }
+            return body.data;
+          }
+
+          // 默认直接返回原始 JSON 数据
+          return body;
         }
 
         // Navigation
@@ -675,10 +724,10 @@ Loading audit logs...</pre
         // Data Loading Functions
         async function loadCurrentUser() {
           try {
-            const user = await apiFetch(`${API_BASE}/auth/me`);
-            document.getElementById("user-info").textContent = `${
-              user.username
-            } ${user.is_superuser ? "(Admin)" : ""}`;
+            const user = await apiFetch(`${API_BASE}/v1/me`);
+            document.getElementById("user-info").textContent = `${user.email} ${
+              user.is_superuser ? "(Admin)" : ""
+            }`;
             if (!user.is_superuser) {
               alert("Access denied. Admin privileges required.");
               window.location.href = "index.html";
@@ -691,9 +740,9 @@ Loading audit logs...</pre
         async function loadDashboard() {
           try {
             const [users, roles, permissions] = await Promise.all([
-              apiFetch(`${API_BASE}/users/`),
-              apiFetch(`${API_BASE}/rbac/roles`),
-              apiFetch(`${API_BASE}/rbac/permissions`),
+              apiFetch(`${API_BASE}/v1/users/`),
+              apiFetch(`${API_BASE}/v1/rbac/roles`),
+              apiFetch(`${API_BASE}/v1/rbac/permissions`),
             ]);
             document.getElementById("stat-users").textContent = users.length;
             document.getElementById("stat-roles").textContent = roles.length;
@@ -721,18 +770,17 @@ Loading audit logs...</pre
 
         async function loadUsers() {
           try {
-            const users = await apiFetch(`${API_BASE}/users/`);
+            const users = await apiFetch(`${API_BASE}/v1/users/`);
 
             // 使用通用表格渲染器 - 配置驱动的方式
             renderGenericTable("users-table", users, [
               { key: "id" },
-              { key: "username" },
+              { key: "email" },
               { key: "is_active", render: (val) => (val ? "Yes" : "No") },
               { key: "is_superuser", render: (val) => (val ? "Yes" : "No") },
               {
-                key: "roles",
-                render: (roles) =>
-                  (roles || []).map((r) => r.name).join(", ") || "-",
+                key: "role",
+                render: (role) => role || "-",
               },
               {
                 key: "id",
@@ -754,7 +802,7 @@ Loading audit logs...</pre
 
         async function loadRoles() {
           try {
-            const roles = await apiFetch(`${API_BASE}/rbac/roles`);
+            const roles = await apiFetch(`${API_BASE}/v1/rbac/roles`);
 
             // 使用通用表格渲染器
             renderGenericTable("roles-table", roles, [
@@ -775,7 +823,9 @@ Loading audit logs...</pre
 
         async function loadPermissions() {
           try {
-            const permissions = await apiFetch(`${API_BASE}/rbac/permissions`);
+            const permissions = await apiFetch(
+              `${API_BASE}/v1/rbac/permissions`
+            );
 
             // 使用通用表格渲染器
             renderGenericTable("permissions-table", permissions, [
@@ -814,7 +864,7 @@ Loading audit logs...</pre
           )
             return;
           try {
-            await apiFetch(`${API_BASE}/users/${userId}`, {
+            await apiFetch(`${API_BASE}/v1/users/${userId}`, {
               method: "PATCH",
               body: JSON.stringify({ is_active: setActive }),
             });
@@ -825,19 +875,19 @@ Loading audit logs...</pre
         };
 
         window.showCreateUserModal = function () {
-          const username = prompt("Enter username:");
-          if (!username) return;
+          const email = prompt("Enter email:");
+          if (!email) return;
           const password = prompt("Enter password:");
           if (!password) return;
-          createUser(username, password);
+          createUser(email, password);
         };
 
-        async function createUser(username, password) {
+        async function createUser(email, password) {
           try {
-            await apiFetch(`${API_BASE}/users/`, {
+            await apiFetch(`${API_BASE}/v1/users/`, {
               method: "POST",
               body: JSON.stringify({
-                username,
+                email,
                 password,
                 is_active: true,
                 is_superuser: false,
@@ -858,7 +908,7 @@ Loading audit logs...</pre
 
         async function createRole(name, description) {
           try {
-            await apiFetch(`${API_BASE}/rbac/roles`, {
+            await apiFetch(`${API_BASE}/v1/rbac/roles`, {
               method: "POST",
               body: JSON.stringify({ name, description }),
             });

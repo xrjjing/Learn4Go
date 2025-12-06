@@ -7,9 +7,9 @@
 //   - 路由分发：根据路径前缀转发到不同后端
 //
 // 运行方式：
-//   1. 先启动后端服务: go run ./cmd/todoapi
-//   2. 启动网关: go run ./examples/gateway/stdlib
-//   3. 通过网关访问: curl http://localhost:8888/api/todos
+//  1. 先启动后端服务: go run ./cmd/todoapi
+//  2. 启动网关: go run ./examples/gateway/stdlib
+//  3. 通过网关访问: curl http://localhost:8888/api/v1/todos
 package main
 
 import (
@@ -22,9 +22,10 @@ import (
 )
 
 // 后端服务地址配置
+// 通过路径前缀 /api/v1/* 转发到实际的 /v1/* 接口
 var backends = map[string]string{
-	"/api/todos": "http://localhost:8080", // TODO API 服务
-	"/api/users": "http://localhost:8081", // 用户服务（示例）
+	"/api/v1/todos": "http://localhost:8080", // TODO API 服务
+	"/api/v1/users": "http://localhost:8081", // 用户服务（示例）
 }
 
 // middleware 定义中间件函数类型
@@ -166,6 +167,11 @@ func router() http.Handler {
 		// 根据路径前缀找到对应的后端
 		for prefix, backend := range backends {
 			if strings.HasPrefix(path, prefix) {
+				// 将 /api 前缀剥离，保持 /v1/... 路径与后端一致
+				if strings.HasPrefix(path, "/api/") {
+					r.URL.Path = strings.TrimPrefix(path, "/api")
+				}
+
 				// 创建代理并转发请求
 				proxy := createProxy(backend)
 				proxy.ServeHTTP(w, r)
@@ -203,7 +209,7 @@ func main() {
 	}
 	log.Println("\n测试命令:")
 	log.Println("  curl http://localhost:8888/health")
-	log.Println("  curl http://localhost:8888/api/todos")
+	log.Println("  curl http://localhost:8888/api/v1/todos")
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("服务器退出: %v", err)

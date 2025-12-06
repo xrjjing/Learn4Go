@@ -444,14 +444,14 @@
         const isDocker =
           window.location.hostname !== "localhost" &&
           window.location.hostname !== "127.0.0.1";
+        const baseTodoApi =
+          window.AppConfig?.todoApiBaseUrl ||
+          (isDocker ? "/api" : "http://127.0.0.1:8080");
+
         const services = {
           todoapi: {
-            url: isDocker
-              ? "/api/todos"
-              : window.AppConfig?.todoApiBaseUrl || "http://127.0.0.1:8080",
-            healthUrl: isDocker
-              ? "/api/todos"
-              : "http://127.0.0.1:8080/healthz",
+            url: baseTodoApi + "/v1/todos",
+            healthUrl: baseTodoApi + "/healthz",
             status: "checking",
           },
           gateway: {

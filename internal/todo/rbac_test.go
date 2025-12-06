@@ -16,7 +16,7 @@ func TestRBACOwnership(t *testing.T) {
 
 	// admin 创建一个 todo
 	adminToken := loginAndGetToken(t, h, "admin@example.com", "admin123")
-	createReq := httptest.NewRequest(http.MethodPost, "/todos", bytes.NewBufferString(`{"title":"admin todo"}`))
+	createReq := httptest.NewRequest(http.MethodPost, "/v1/todos", bytes.NewBufferString(`{"title":"admin todo"}`))
 	createReq.Header.Set("Authorization", "Bearer "+adminToken)
 	createReq.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -29,7 +29,7 @@ func TestRBACOwnership(t *testing.T) {
 
 	// user 尝试删除 admin 的 todo，应被拒绝
 	userToken := loginAndGetToken(t, h, "user@example.com", "user123")
-	delReq := httptest.NewRequest(http.MethodDelete, "/todos/"+strconv.Itoa(created.ID), nil)
+	delReq := httptest.NewRequest(http.MethodDelete, "/v1/todos/"+strconv.Itoa(created.ID), nil)
 	delReq.Header.Set("Authorization", "Bearer "+userToken)
 	w2 := httptest.NewRecorder()
 	h.ServeHTTP(w2, delReq)
@@ -40,7 +40,7 @@ func TestRBACOwnership(t *testing.T) {
 
 func loginAndGetToken(t *testing.T, h http.Handler, email, password string) string {
 	body := bytes.NewBufferString(`{"email":"` + email + `","password":"` + password + `"}`)
-	req := httptest.NewRequest(http.MethodPost, "/login", body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/login", body)
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, req)

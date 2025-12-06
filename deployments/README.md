@@ -68,7 +68,7 @@ docker-compose logs -f gateway
 ### 4. 访问服务
 
 - **前端门户**: http://localhost
-- **TODO API**: http://localhost/api/todos
+- **TODO API**: http://localhost/api/v1/todos
 - **API 网关**: http://localhost/api
 - **MinIO 控制台**: http://localhost:9001 (用户名: minioadmin, 密码: minioadmin)
 

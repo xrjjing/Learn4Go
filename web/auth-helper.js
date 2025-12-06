@@ -24,7 +24,7 @@
     async function refreshToken() {
         const tokens = load();
         if (!tokens.refresh) return null;
-        const resp = await fetch(`${apiBase}/refresh`, {
+        const resp = await fetch(`${apiBase}/v1/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh_token: tokens.refresh })

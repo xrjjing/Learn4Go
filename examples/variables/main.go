@@ -6,10 +6,10 @@ import "fmt"
 
 func main() {
 	// 变量声明方式
-	var a int = 10           // 显式类型
-	var b = 20               // 类型推断
-	c := 30                  // 短声明（仅函数内）
-	var d, e int = 40, 50    // 多变量声明
+	var a int = 10        // 显式类型
+	var b = 20            // 类型推断
+	c := 30               // 短声明（仅函数内）
+	var d, e int = 40, 50 // 多变量声明
 
 	fmt.Println("变量声明:", a, b, c, d, e)
 

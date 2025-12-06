@@ -14,7 +14,7 @@
 
 ### 服务地址
 
-- **Docker 部署**: http://localhost/api/todos
+- **Docker 部署**: http://localhost/api/v1/todos
 - **本地开发**: http://localhost:8080
 
 ### 数据格式
@@ -102,7 +102,7 @@ HTTP/1.1 409 Conflict
 **示例**
 
 ```bash
-curl -X POST http://localhost:8080/register \
+curl -X POST http://localhost:8080/v1/register \
   -H "Content-Type: application/json" \
   -d '{"email":"newuser@example.com","password":"pass123"}'
 ```
@@ -116,7 +116,7 @@ curl -X POST http://localhost:8080/register \
 **请求**
 
 ```http
-POST /login
+POST /v1/login
 Content-Type: application/json
 
 {
@@ -170,7 +170,7 @@ Retry-After: 600
 
 ```bash
 # 登录并保存token
-TOKEN=$(curl -s -X POST http://localhost:8080/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/v1/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@example.com","password":"admin123"}' \
   | jq -r '.token')
@@ -185,7 +185,7 @@ echo "Token: $TOKEN"
 使用 refresh token 旋转获取新的 access/refresh。
 
 ```http
-POST /refresh
+POST /v1/refresh
 Content-Type: application/json
 
 {
@@ -240,7 +240,7 @@ curl http://localhost:8080/healthz
 **请求**
 
 ```http
-GET /todos
+GET /v1/todos
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
@@ -279,11 +279,11 @@ HTTP/1.1 401 Unauthorized
 
 ```bash
 # 使用token访问
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN"
 
 # 通过网关访问
-curl http://localhost:8888/api/todos/todos \
+curl http://localhost:8888/api/v1/todos \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -296,7 +296,7 @@ curl http://localhost:8888/api/todos/todos \
 **请求**
 
 ```http
-POST /todos
+POST /v1/todos
 Authorization: Bearer YOUR_JWT_TOKEN
 Content-Type: application/json
 
@@ -340,13 +340,13 @@ Content-Type: application/json
 
 ```bash
 # 创建 TODO（需要token）
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"学习 Go 并发编程"}'
 
 # 通过网关创建
-curl -X POST http://localhost:8888/api/todos/todos \
+curl -X POST http://localhost:8888/api/v1/todos \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"部署到 Docker"}'
@@ -361,7 +361,7 @@ curl -X POST http://localhost:8888/api/todos/todos \
 **请求**
 
 ```http
-PUT /todos/{id}
+PUT /v1/todos/{id}
 Authorization: Bearer YOUR_JWT_TOKEN
 Content-Type: application/json
 
@@ -411,13 +411,13 @@ Content-Type: application/json
 
 ```bash
 # 标记为已完成（需要token）
-curl -X PUT http://localhost:8080/todos/1 \
+curl -X PUT http://localhost:8080/v1/todos/1 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"done":true}'
 
 # 标记为未完成
-curl -X PUT http://localhost:8080/todos/1 \
+curl -X PUT http://localhost:8080/v1/todos/1 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"done":false}'
@@ -432,7 +432,7 @@ curl -X PUT http://localhost:8080/todos/1 \
 **请求**
 
 ```http
-DELETE /todos/{id}
+DELETE /v1/todos/{id}
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
@@ -463,11 +463,11 @@ Content-Type: application/json
 
 ```bash
 # 删除 TODO（需要token）
-curl -X DELETE http://localhost:8080/todos/1 \
+curl -X DELETE http://localhost:8080/v1/todos/1 \
   -H "Authorization: Bearer $TOKEN"
 
 # 通过网关删除
-curl -X DELETE http://localhost:8888/api/todos/todos/1 \
+curl -X DELETE http://localhost:8888/api/v1/todos/1 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -522,7 +522,7 @@ curl -X DELETE http://localhost:8888/api/todos/todos/1 \
 #### 1. 缺少标题
 
 ```bash
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Content-Type: application/json" \
   -d '{"title":""}'
 ```
@@ -538,7 +538,7 @@ curl -X POST http://localhost:8080/todos \
 #### 2. JSON 格式错误
 
 ```bash
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Content-Type: application/json" \
   -d '{invalid json}'
 ```
@@ -554,7 +554,7 @@ curl -X POST http://localhost:8080/todos \
 #### 3. TODO 不存在
 
 ```bash
-curl -X PUT http://localhost:8080/todos/999 \
+curl -X PUT http://localhost:8080/v1/todos/999 \
   -H "Content-Type: application/json" \
   -d '{"done":true}'
 ```
@@ -586,7 +586,7 @@ curl -X PUT http://localhost:8080/todos/999 \
 curl http://localhost:8080/healthz
 
 # 2. 用户登录获取token
-TOKEN=$(curl -s -X POST http://localhost:8080/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/v1/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@example.com","password":"admin123"}' \
   | jq -r '.token')
@@ -594,37 +594,37 @@ TOKEN=$(curl -s -X POST http://localhost:8080/login \
 echo "Token: $TOKEN"
 
 # 3. 获取所有 TODO（初始为空）
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN"
 
 # 4. 创建第一个 TODO
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"学习 Go 语言基础"}'
 
 # 5. 创建第二个 TODO
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"完成 TODO API 项目"}'
 
 # 6. 查看所有 TODO
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN"
 
 # 7. 标记第一个 TODO 为已完成
-curl -X PUT http://localhost:8080/todos/1 \
+curl -X PUT http://localhost:8080/v1/todos/1 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"done":true}'
 
 # 8. 删除第二个 TODO
-curl -X DELETE http://localhost:8080/todos/2 \
+curl -X DELETE http://localhost:8080/v1/todos/2 \
   -H "Authorization: Bearer $TOKEN"
 
 # 9. 再次查看所有 TODO
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -636,13 +636,13 @@ curl http://localhost:8080/todos \
 # Ubuntu: sudo apt-get install jq
 
 # 格式化输出
-curl -s http://localhost:8080/todos | jq .
+curl -s http://localhost:8080/v1/todos | jq .
 
 # 只显示标题
-curl -s http://localhost:8080/todos | jq '.[].title'
+curl -s http://localhost:8080/v1/todos | jq '.[].title'
 
 # 只显示未完成的 TODO
-curl -s http://localhost:8080/todos | jq '.[] | select(.done == false)'
+curl -s http://localhost:8080/v1/todos | jq '.[] | select(.done == false)'
 ```
 
 ### 使用 Postman
@@ -667,7 +667,7 @@ curl -s http://localhost:8080/todos | jq '.[] | select(.done == false)'
       "name": "Get All TODOs",
       "request": {
         "method": "GET",
-        "url": "http://localhost:8080/todos"
+        "url": "http://localhost:8080/v1/todos"
       }
     },
     {
@@ -684,7 +684,7 @@ curl -s http://localhost:8080/todos | jq '.[] | select(.done == false)'
           "mode": "raw",
           "raw": "{\"title\":\"学习 Go 语言\"}"
         },
-        "url": "http://localhost:8080/todos"
+        "url": "http://localhost:8080/v1/todos"
       }
     },
     {
@@ -701,14 +701,14 @@ curl -s http://localhost:8080/todos | jq '.[] | select(.done == false)'
           "mode": "raw",
           "raw": "{\"done\":true}"
         },
-        "url": "http://localhost:8080/todos/1"
+        "url": "http://localhost:8080/v1/todos/1"
       }
     },
     {
       "name": "Delete TODO",
       "request": {
         "method": "DELETE",
-        "url": "http://localhost:8080/todos/1"
+        "url": "http://localhost:8080/v1/todos/1"
       }
     }
   ]
@@ -796,9 +796,225 @@ MySQL 模式下，GORM 自动管理连接池：
 
 - [README.md](../README.md) - 项目总览
 - [认证系统文档](JWT认证系统.md) - JWT 认证详细说明
+- [RBAC 权限控制](RBAC权限控制.md) - 角色与权限管理
 - [前端使用指南](前端使用指南.md) - 前端页面说明
 - [部署指南](../deployments/README.md) - Docker 部署
 - [项目计划](../plan.md) - 后续开发计划
+
+## 管理后台 API
+
+### GET /v1/me
+
+获取当前登录用户信息。
+
+**请求**:
+
+```http
+GET /v1/me
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+**响应**:
+
+```json
+{
+  "id": 1,
+  "email": "admin@example.com",
+  "role": "admin",
+  "is_superuser": true,
+  "is_active": true,
+  "created_at": "2025-01-01T00:00:00Z"
+}
+```
+
+### POST /v1/logout
+
+用户登出，清除 refresh tokens。
+
+**请求**:
+
+```http
+POST /v1/logout
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+**响应**:
+
+```json
+{
+  "message": "logged out successfully"
+}
+```
+
+### GET /v1/users
+
+获取所有用户列表（需要管理员权限）。
+
+**请求**:
+
+```http
+GET /v1/users
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+**响应**:
+
+```json
+[
+  {
+    "id": 1,
+    "email": "admin@example.com",
+    "role": "admin",
+    "is_superuser": true,
+    "is_active": true,
+    "created_at": "2025-01-01T00:00:00Z"
+  }
+]
+```
+
+### POST /v1/users
+
+创建新用户（需要管理员权限）。
+
+**请求**:
+
+```http
+POST /v1/users
+Authorization: Bearer YOUR_JWT_TOKEN
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "password123",
+  "is_superuser": false
+}
+```
+
+**响应**:
+
+```json
+{
+  "id": 4,
+  "email": "newuser@example.com",
+  "role": "user",
+  "is_superuser": false,
+  "is_active": true,
+  "created_at": "2025-01-01T00:00:00Z"
+}
+```
+
+### PATCH /v1/users/{id}
+
+更新用户状态（需要管理员权限）。
+
+**请求**:
+
+```http
+PATCH /v1/users/2
+Authorization: Bearer YOUR_JWT_TOKEN
+Content-Type: application/json
+
+{
+  "is_active": false
+}
+```
+
+**响应**:
+
+```json
+{
+  "id": 2,
+  "email": "user@example.com",
+  "role": "user",
+  "is_superuser": false,
+  "is_active": true,
+  "created_at": "2025-01-01T00:00:00Z"
+}
+```
+
+### GET /v1/rbac/roles
+
+获取所有角色列表。
+
+**请求**:
+
+```http
+GET /v1/rbac/roles
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+**响应**:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "admin",
+    "description": "Administrator - Full permissions",
+    "permissions": [
+      { "code": "todos:create", "description": "Create TODO" },
+      { "code": "todos:read", "description": "Read TODO" },
+      { "code": "todos:update", "description": "Update TODO" },
+      { "code": "todos:delete", "description": "Delete TODO" }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "user",
+    "description": "Regular user - Manage own resources",
+    "permissions": [
+      { "code": "todos:create", "description": "Create TODO" },
+      { "code": "todos:read", "description": "Read own TODO" },
+      { "code": "todos:update", "description": "Update own TODO" },
+      { "code": "todos:delete", "description": "Delete own TODO" }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "guest",
+    "description": "Guest - Read-only access",
+    "permissions": [{ "code": "todos:read", "description": "Read TODO" }]
+  }
+]
+```
+
+### GET /v1/rbac/permissions
+
+获取所有权限列表。
+
+**请求**:
+
+```http
+GET /v1/rbac/permissions
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+**响应**:
+
+```json
+[
+  {
+    "id": 1,
+    "code": "todos:create",
+    "description": "Create new TODO items"
+  },
+  {
+    "id": 2,
+    "code": "todos:read",
+    "description": "Read TODO items"
+  },
+  {
+    "id": 3,
+    "code": "todos:update",
+    "description": "Update TODO items"
+  },
+  {
+    "id": 4,
+    "code": "todos:delete",
+    "description": "Delete TODO items"
+  }
+]
+```
 
 ## 问题反馈
 

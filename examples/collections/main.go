@@ -7,9 +7,9 @@ import "fmt"
 func main() {
 	// ========== 数组 ==========
 	// 数组长度固定，是值类型
-	var arr1 [3]int                    // 零值初始化
-	arr2 := [3]int{1, 2, 3}            // 字面量初始化
-	arr3 := [...]int{1, 2, 3, 4, 5}    // 编译器推断长度
+	var arr1 [3]int                 // 零值初始化
+	arr2 := [3]int{1, 2, 3}         // 字面量初始化
+	arr3 := [...]int{1, 2, 3, 4, 5} // 编译器推断长度
 
 	fmt.Println("数组:")
 	fmt.Println("  arr1:", arr1)
@@ -18,8 +18,8 @@ func main() {
 
 	// ========== 切片 ==========
 	// 切片是动态数组，是引用类型
-	slice1 := []int{1, 2, 3}           // 字面量创建
-	slice2 := make([]int, 3, 5)        // make(类型, 长度, 容量)
+	slice1 := []int{1, 2, 3}    // 字面量创建
+	slice2 := make([]int, 3, 5) // make(类型, 长度, 容量)
 
 	fmt.Println("\n切片:")
 	fmt.Println("  slice1:", slice1)
@@ -28,9 +28,9 @@ func main() {
 	// 切片操作
 	nums := []int{0, 1, 2, 3, 4, 5}
 	fmt.Println("  原切片:", nums)
-	fmt.Println("  nums[1:4]:", nums[1:4])  // [1, 2, 3]
-	fmt.Println("  nums[:3]:", nums[:3])    // [0, 1, 2]
-	fmt.Println("  nums[3:]:", nums[3:])    // [3, 4, 5]
+	fmt.Println("  nums[1:4]:", nums[1:4]) // [1, 2, 3]
+	fmt.Println("  nums[:3]:", nums[:3])   // [0, 1, 2]
+	fmt.Println("  nums[3:]:", nums[3:])   // [3, 4, 5]
 
 	// append 追加元素
 	slice1 = append(slice1, 4, 5)
@@ -90,6 +90,6 @@ func main() {
 	// nil 切片 vs 空切片
 	var nilSlice []int
 	emptySlice := []int{}
-	fmt.Println("  nil切片:", nilSlice == nil)     // true
-	fmt.Println("  空切片:", emptySlice == nil)    // false
+	fmt.Println("  nil切片:", nilSlice == nil) // true
+	fmt.Println("  空切片:", emptySlice == nil) // false
 }

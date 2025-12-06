@@ -5,11 +5,12 @@
 //   - Server Streaming RPC 调用: WatchTime
 //
 // 运行前需要：
-//   1. 生成 protobuf 代码: cd examples/grpc && make proto
-//   2. 启动服务器: go run ./examples/grpc/server
+//  1. 生成 protobuf 代码: cd examples/grpc && make proto
+//  2. 启动服务器: go run ./examples/grpc/server
 //
 // 运行客户端：
-//   go run ./examples/grpc/client
+//
+//	go run ./examples/grpc/client
 package main
 
 import (

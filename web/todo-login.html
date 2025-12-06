@@ -57,7 +57,7 @@
         loginBtn.disabled = true;
         loginBtn.textContent = '登录中...';
         try {
-            const resp = await fetch(`${api}/login`, {
+            const resp = await fetch(`${api}/v1/login`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -83,7 +83,7 @@
     }
 
     async function fetchMe() {
-        const resp = await AuthClient.authFetch(`${api}/todos`, { method: 'GET' });
+        const resp = await AuthClient.authFetch(`${api}/v1/todos`, { method: 'GET' });
         const data = await resp.json();
         if (resp.ok) {
             okBox.textContent = `已获取 TODO 列表，条目数: ${data.length}`;

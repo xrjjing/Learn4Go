@@ -15,7 +15,7 @@ func TestTodoFlow(t *testing.T) {
 
 	// 登录获取 token
 	loginBody := bytes.NewBufferString(`{"email":"admin@example.com","password":"admin123"}`)
-	loginReq := httptest.NewRequest(http.MethodPost, "/login", loginBody)
+	loginReq := httptest.NewRequest(http.MethodPost, "/v1/login", loginBody)
 	loginReq.Header.Set("Content-Type", "application/json")
 	loginRR := httptest.NewRecorder()
 	handler.ServeHTTP(loginRR, loginReq)
@@ -32,7 +32,7 @@ func TestTodoFlow(t *testing.T) {
 
 	// create
 	body := bytes.NewBufferString(`{"title":"learn go"}`)
-	req := httptest.NewRequest(http.MethodPost, "/todos", body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/todos", body)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", authHeader)
 	rr := httptest.NewRecorder()
@@ -47,7 +47,7 @@ func TestTodoFlow(t *testing.T) {
 	}
 
 	// list
-	req = httptest.NewRequest(http.MethodGet, "/todos", nil)
+	req = httptest.NewRequest(http.MethodGet, "/v1/todos", nil)
 	req.Header.Set("Authorization", authHeader)
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -62,7 +62,7 @@ func TestTodoFlow(t *testing.T) {
 
 	// toggle
 	reqBody := bytes.NewBufferString(`{"done":true}`)
-	req = httptest.NewRequest(http.MethodPut, "/todos/"+strconv.Itoa(created.ID), reqBody)
+	req = httptest.NewRequest(http.MethodPut, "/v1/todos/"+strconv.Itoa(created.ID), reqBody)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", authHeader)
 	rr = httptest.NewRecorder()
@@ -72,7 +72,7 @@ func TestTodoFlow(t *testing.T) {
 	}
 
 	// delete
-	req = httptest.NewRequest(http.MethodDelete, "/todos/"+strconv.Itoa(created.ID), nil)
+	req = httptest.NewRequest(http.MethodDelete, "/v1/todos/"+strconv.Itoa(created.ID), nil)
 	req.Header.Set("Authorization", authHeader)
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)

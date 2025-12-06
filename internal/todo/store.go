@@ -1,8 +1,10 @@
 package todo
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"encoding/binary"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -29,13 +31,21 @@ type TodoStore interface {
 
 // Store 提供并发安全的内存存储 (实现 TodoStore 接口)
 type Store struct {
-	mu    sync.Mutex
-	items map[int]Todo
+	mu     sync.Mutex
+	items  map[int]Todo
+	nextID atomic.Int64 // 原子递增的 ID 生成器，确保并发安全
 }
 
 // NewStore 创建空存储。
 func NewStore() *Store {
-	return &Store{items: make(map[int]Todo)}
+	s := &Store{items: make(map[int]Todo)}
+	// 使用加密随机数初始化 ID 起始值，避免 ID 可预测
+	var seed int64
+	if err := binary.Read(rand.Reader, binary.BigEndian, &seed); err != nil {
+		seed = time.Now().UnixNano()
+	}
+	s.nextID.Store(seed & 0x7FFFFFFF) // 确保为正数
+	return s
 }
 
 // List 返回全部待办的拷贝。
@@ -97,23 +107,9 @@ func (s *Store) ListPaged(page, pageSize int) ([]Todo, int, error) {
 }
 
 // Create 新建待办。
-// 使用随机 ID 并确保不冲突，最多重试 100 次
+// 使用原子递增 ID，确保并发安全且不冲突
 func (s *Store) Create(title string, userID uint) (Todo, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// 生成不冲突的随机 ID
-	var id int
-	for i := 0; i < 100; i++ {
-		id = rand.Intn(1_000_000)
-		if _, exists := s.items[id]; !exists {
-			break
-		}
-		if i == 99 {
-			// 极端情况：ID 空间耗尽，使用时间戳
-			id = int(time.Now().UnixNano() % 1_000_000)
-		}
-	}
+	id := int(s.nextID.Add(1))
 
 	t := Todo{
 		ID:        id,
@@ -121,7 +117,11 @@ func (s *Store) Create(title string, userID uint) (Todo, error) {
 		Title:     title,
 		CreatedAt: time.Now(),
 	}
+
+	s.mu.Lock()
 	s.items[id] = t
+	s.mu.Unlock()
+
 	return t, nil
 }
 

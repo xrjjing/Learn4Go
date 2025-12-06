@@ -15,7 +15,7 @@ func TestRefreshToken(t *testing.T) {
 
 	// login 获取 refresh
 	loginBody := bytes.NewBufferString(`{"email":"admin@example.com","password":"admin123"}`)
-	req := httptest.NewRequest(http.MethodPost, "/login", loginBody)
+	req := httptest.NewRequest(http.MethodPost, "/v1/login", loginBody)
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -30,7 +30,7 @@ func TestRefreshToken(t *testing.T) {
 	}
 
 	refreshReqBody := bytes.NewBufferString(`{"refresh_token":"` + refresh + `"}`)
-	req2 := httptest.NewRequest(http.MethodPost, "/refresh", refreshReqBody)
+	req2 := httptest.NewRequest(http.MethodPost, "/v1/refresh", refreshReqBody)
 	req2.Header.Set("Content-Type", "application/json")
 	rr2 := httptest.NewRecorder()
 	handler.ServeHTTP(rr2, req2)
@@ -39,7 +39,7 @@ func TestRefreshToken(t *testing.T) {
 	}
 
 	// 再次使用旧 refresh 应该失败（被旋转作废）
-	req3 := httptest.NewRequest(http.MethodPost, "/refresh", refreshReqBody)
+	req3 := httptest.NewRequest(http.MethodPost, "/v1/refresh", refreshReqBody)
 	req3.Header.Set("Content-Type", "application/json")
 	rr3 := httptest.NewRecorder()
 	handler.ServeHTTP(rr3, req3)

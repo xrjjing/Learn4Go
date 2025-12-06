@@ -5,13 +5,16 @@
 //   - Server Streaming RPC: WatchTime（服务端持续推送）
 //
 // 运行前需要先生成 protobuf 代码：
-//   cd examples/grpc && make proto
+//
+//	cd examples/grpc && make proto
 //
 // 启动服务器：
-//   go run ./examples/grpc/server
+//
+//	go run ./examples/grpc/server
 //
 // 测试（使用 grpcurl）：
-//   grpcurl -plaintext localhost:50051 hello.Greeter/SayHello
+//
+//	grpcurl -plaintext localhost:50051 hello.Greeter/SayHello
 package main
 
 import (
@@ -78,10 +81,10 @@ func (s *greeterServer) SayHello(ctx context.Context, req *hellopb.HelloRequest)
 //   - stream: 流对象，用于向客户端发送响应
 //
 // 流式 RPC 的生命周期：
-//   1. 客户端发起调用
-//   2. 服务端循环调用 stream.Send() 发送数据
-//   3. 服务端返回 nil 表示流结束
-//   4. 服务端返回 error 表示异常终止
+//  1. 客户端发起调用
+//  2. 服务端循环调用 stream.Send() 发送数据
+//  3. 服务端返回 nil 表示流结束
+//  4. 服务端返回 error 表示异常终止
 func (s *greeterServer) WatchTime(_ *hellopb.Empty, stream hellopb.Greeter_WatchTimeServer) error {
 	log.Println("收到 WatchTime 请求，开始推送时间...")
 

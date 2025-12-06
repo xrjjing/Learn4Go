@@ -13,11 +13,11 @@
 
 ## 核心功能
 
-### 1. 用户注册 (`POST /register`)
+### 1. 用户注册 (`POST /v1/register`)
 
 **请求示例**：
 ```bash
-curl -X POST http://localhost:8080/register \
+curl -X POST http://localhost:8080/v1/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "newuser@example.com",
@@ -39,11 +39,11 @@ curl -X POST http://localhost:8080/register \
 - bcrypt密码加密（cost=10）
 - 自动生成用户ID
 
-### 2. 用户登录 (`POST /login`)
+### 2. 用户登录 (`POST /v1/login`)
 
 **请求示例**：
 ```bash
-curl -X POST http://localhost:8080/login \
+curl -X POST http://localhost:8080/v1/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -70,16 +70,16 @@ curl -X POST http://localhost:8080/login \
 
 ### 3. 受保护的API访问
 
-所有 `/todos*` 路径需要JWT认证。
+所有 `/v1/todos*` 路径需要JWT认证。
 
 **请求示例**：
 ```bash
 # 获取TODO列表
-curl http://localhost:8080/todos \
+curl http://localhost:8080/v1/todos \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
 # 创建TODO
-curl -X POST http://localhost:8080/todos \
+curl -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title": "新任务"}'
@@ -114,10 +114,10 @@ curl -X POST http://localhost:8080/todos \
 ### 1. 认证中间件
 
 ```go
-// authMiddleware 保护 /todos* 路径
+// authMiddleware 保护 /v1/todos* 路径
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
-    // 公开路径：/, /healthz, /register, /login
-    // 受保护路径：/todos*
+    // 公开路径：/, /healthz, /v1/register, /v1/login, /v1/refresh
+    // 受保护路径：/v1/todos*
 }
 ```
 
@@ -200,24 +200,24 @@ export JWT_TTL="24h"
 
 ```bash
 # 1. 注册新用户
-REGISTER_RESP=$(curl -s -X POST http://localhost:8080/register \
+REGISTER_RESP=$(curl -s -X POST http://localhost:8080/v1/register \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test123"}')
 echo "注册响应: $REGISTER_RESP"
 
 # 2. 登录获取token
-LOGIN_RESP=$(curl -s -X POST http://localhost:8080/login \
+LOGIN_RESP=$(curl -s -X POST http://localhost:8080/v1/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test123"}')
 TOKEN=$(echo $LOGIN_RESP | jq -r '.token')
 echo "Token: $TOKEN"
 
 # 3. 使用token访问API
-curl -s http://localhost:8080/todos \
+curl -s http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN"
 
 # 4. 创建TODO
-curl -s -X POST http://localhost:8080/todos \
+curl -s -X POST http://localhost:8080/v1/todos \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"我的第一个任务"}'

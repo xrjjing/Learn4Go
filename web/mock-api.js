@@ -135,6 +135,36 @@
       return window.mockData[fullKey];
     }
 
+    // 兼容 Go 版 TODO/RBAC API 的 /v1 前缀路径到旧的 mock 定义
+    // 这样 login.html、admin.html、todo-login.html 在 mock 模式下也能工作
+    if (path.startsWith("/v1/todos")) {
+      // 简化处理：不同方法共用同一组示例数据
+      if (method === "GET") return window.mockData["/todos"];
+      if (method === "POST") return window.mockData["POST /todos"];
+      if (method === "PUT") return window.mockData["PUT /todos/3"];
+      if (method === "DELETE") return window.mockData["DELETE /todos/3"];
+    }
+
+    if (path.startsWith("/v1/login")) {
+      return window.mockData["/auth/login"];
+    }
+
+    if (path.startsWith("/v1/me")) {
+      return window.mockData["/auth/me"];
+    }
+
+    if (path.startsWith("/v1/users")) {
+      return window.mockData["/users/"];
+    }
+
+    if (path.startsWith("/v1/rbac/roles")) {
+      return window.mockData["/rbac/roles"];
+    }
+
+    if (path.startsWith("/v1/rbac/permissions")) {
+      return window.mockData["/rbac/permissions"];
+    }
+
     return null;
   }
 

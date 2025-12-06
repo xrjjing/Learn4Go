@@ -22,7 +22,7 @@ func (p *Person) SetAge(age int) {
 
 // 嵌入结构体（组合）
 type Employee struct {
-	Person          // 匿名嵌入，继承字段和方法
+	Person   // 匿名嵌入，继承字段和方法
 	Company  string
 	Position string
 }
@@ -42,8 +42,8 @@ type User struct {
 func main() {
 	// 创建结构体
 	p1 := Person{Name: "张三", Age: 25}
-	p2 := Person{"李四", 30}                  // 按顺序
-	p3 := new(Person)                        // 返回指针
+	p2 := Person{"李四", 30} // 按顺序
+	p3 := new(Person)      // 返回指针
 	p3.Name = "王五"
 	p3.Age = 35
 

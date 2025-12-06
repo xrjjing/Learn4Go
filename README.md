@@ -30,7 +30,7 @@ docker-compose up -d
 
 # 3. 访问服务
 # 前端门户: http://localhost
-# TODO API: http://localhost/api/todos
+# TODO API: http://localhost/api/v1/todos
 # MinIO 控制台: http://localhost:9001
 ```
 
@@ -46,8 +46,8 @@ cd Learn4Go-1
 
 # 3. 访问服务
 # 学习门户: http://localhost:8000/portal.html
-# TODO API: http://localhost:8080
-# Gateway: http://localhost:8888
+# TODO API: http://localhost:8080/v1/todos
+# Gateway: http://localhost:8888/api/v1/todos
 
 # 4. 停止服务
 ./stop-local.sh

@@ -50,11 +50,11 @@ go run ./examples/gateway/gin
 # 健康检查
 curl http://localhost:8888/health
 
-# 通过网关访问 TODO API
-curl http://localhost:8888/api/todos
+# 通过网关访问 TODO API（对应后端 /v1/todos）
+curl http://localhost:8888/api/v1/todos
 
 # 创建 TODO
-curl -X POST http://localhost:8888/api/todos \
+curl -X POST http://localhost:8888/api/v1/todos \
   -H "Content-Type: application/json" \
   -d '{"title":"学习Go网关"}'
 ```
@@ -78,8 +78,8 @@ curl -X POST http://localhost:8888/api/todos \
 
 | 网关路径 | 后端服务 |
 |---------|---------|
-| /api/todos/* | localhost:8080 |
-| /api/users/* | localhost:8081 |
+| /api/v1/todos/* | localhost:8080 (TODO API 的 /v1/todos) |
+| /api/v1/users/* | localhost:8081 |
 | /health | 网关自身 |
 
 ## 生产环境建议

@@ -2,10 +2,12 @@
 // 对应章节: 05_配置与日志.md
 //
 // 运行方式:
-//   go run ./examples/config
+//
+//	go run ./examples/config
 //
 // 环境变量覆盖:
-//   SERVER_PORT=9090 go run ./examples/config
+//
+//	SERVER_PORT=9090 go run ./examples/config
 package main
 
 import (

@@ -43,8 +43,8 @@ type Task func() error
 //   - 每个 worker 不断从 tasks 通道读取任务并执行
 //   - 当 tasks 通道关闭且为空时，worker 自动退出
 type Pool struct {
-	size  int        // worker 数量（并发 goroutine 数）
-	tasks chan Task  // 任务队列（带缓冲的通道）
+	size  int       // worker 数量（并发 goroutine 数）
+	tasks chan Task // 任务队列（带缓冲的通道）
 	wg    sync.WaitGroup
 }
 
