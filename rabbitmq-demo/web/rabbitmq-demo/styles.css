@@ -1,0 +1,223 @@
+:root {
+  --bg: #0b1221;
+  --card: #111a2c;
+  --text: #e6edf3;
+  --accent: #4fc3f7;
+  --muted: #7a8699;
+  --border: #1f2a3d;
+  --success: #6dd3a0;
+  --warn: #f2b880;
+  --error: #f78c6c;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  background: radial-gradient(circle at 20% 20%, #13233d, #0b1221 40%),
+    radial-gradient(circle at 80% 0%, #0f2547, #0b1221 45%);
+  color: var(--text);
+}
+header {
+  margin-bottom: 16px;
+}
+h1 {
+  margin: 0 0 6px;
+}
+p {
+  margin: 4px 0;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+label {
+  display: block;
+  margin: 8px 0;
+  color: var(--muted);
+}
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0c1728;
+  color: var(--text);
+}
+button {
+  background: linear-gradient(120deg, #4fc3f7, #6dd3a0);
+  border: none;
+  color: #0b1221;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+button:active {
+  transform: translateY(0);
+}
+
+#log-container {
+  max-height: 320px;
+  overflow-y: auto;
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  background: #0c1728;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.log {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.log-send {
+  background: rgba(79, 195, 247, 0.12);
+}
+.log-consume {
+  background: rgba(109, 211, 160, 0.12);
+}
+.log-dlx {
+  background: rgba(242, 184, 128, 0.15);
+}
+.log-error {
+  background: rgba(247, 140, 108, 0.15);
+}
+
+.queue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.queue-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: #0c1728;
+}
+.q-name {
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+footer {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+footer a:hover {
+  text-decoration: underline;
+}
+.doc-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* 错误提示横幅 - Toast 卡片样式 */
+.error-banner {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-150%);
+  background: #2c1f1f;
+  border: 1px solid #ef5350;
+  color: #ffcdd2;
+  padding: 14px 48px 14px 14px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  max-width: 500px;
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+  pointer-events: none;
+}
+
+.error-banner.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.error-close {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #ffcdd2;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+  line-height: 20px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.error-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.error-close:focus {
+  outline: 2px solid #ef5350;
+  outline-offset: 2px;
+}
+@keyframes slideDown {
+  from {
+    top: -60px;
+    opacity: 0;
+  }
+  to {
+    top: 16px;
+    opacity: 1;
+  }
+}
+
+@media (min-width: 900px) {
+  body {
+    padding: 24px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}

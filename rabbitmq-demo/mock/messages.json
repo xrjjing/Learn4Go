@@ -1,0 +1,23 @@
+[
+  {
+    "id": "demo-001",
+    "type": "order.created",
+    "payload": {"orderId": "A1001", "userId": "U001", "amount": 199.0}
+  },
+  {
+    "id": "demo-002",
+    "type": "order.cancelled",
+    "payload": {"orderId": "A1002", "reason": "user_request"}
+  },
+  {
+    "id": "demo-003",
+    "type": "order.fail",
+    "payload": {"orderId": "A1003", "note": "simulate_error"}
+  },
+  {
+    "id": "demo-004",
+    "type": "order.closed",
+    "ttl_ms": 15000,
+    "payload": {"orderId": "A1004", "reason": "payment_timeout"}
+  }
+]

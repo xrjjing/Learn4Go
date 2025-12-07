@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RabbitMQ Demo 面板</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>RabbitMQ 订单异步演示</h1>
+      <p>发送消息、查看消费/死信日志，配合文档与 Mock 数据快速上手。</p>
+    </header>
+
+    <!-- 全局错误提示区 -->
+    <div
+      id="error-banner"
+      class="error-banner"
+      role="alert"
+      aria-live="assertive"
+      aria-hidden="true"
+    >
+      <div class="error-content">
+        <span class="error-icon">⚠️</span>
+        <span id="error-message"></span>
+      </div>
+      <button id="error-close" class="error-close" aria-label="关闭错误提示">
+        ✕
+      </button>
+    </div>
+
+    <section class="card">
+      <h2>运行状态</h2>
+      <div id="status">
+        <div><strong>模式</strong>：<span id="mode">-</span></div>
+        <div><strong>连接</strong>：<span id="conn">-</span></div>
+        <div class="queue-grid" id="queues"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>发送单条消息</h2>
+      <form id="send-form">
+        <label
+          >消息类型
+          <select id="msg-type">
+            <option value="order.created">order.created</option>
+            <option value="order.cancelled">order.cancelled</option>
+            <option value="order.fail">order.fail（触发业务失败→DLX）</option>
+            <option value="order.closed">
+              order.closed（配合 TTL 演示延迟）
+            </option>
+          </select>
+        </label>
+        <label
+          >TTL 毫秒（可选，>0 走延迟队列）
+          <input type="number" id="msg-ttl" placeholder="0" />
+        </label>
+        <label
+          >Payload (JSON)
+          <textarea id="msg-payload" rows="5">
+{"orderId":"A1001","note":"hello"}</textarea
+          >
+        </label>
+        <button type="submit">发送消息</button>
+        <span id="send-result"></span>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>批量发送 Mock</h2>
+      <p>直接使用 <code>mock/messages.json</code> 里的演示数据。</p>
+      <button id="send-mock">发送 mock 消息</button>
+      <span id="mock-result"></span>
+    </section>
+
+    <section class="card">
+      <h2>消费与死信日志</h2>
+      <div id="log-container"></div>
+    </section>
+
+    <footer>
+      <p>
+        文档：<a href="/docs/guide.md" download>使用指南</a> ｜
+        <a href="/docs/api.md" download>API</a> ｜
+        <a href="/docs/mock.md" download>Mock</a>
+      </p>
+      <p class="doc-note">
+        💡 提示：Markdown 文档建议下载后用支持 Markdown 的编辑器查看（如 VS
+        Code、Typora），或右键"在新标签页打开"查看源码。
+      </p>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
