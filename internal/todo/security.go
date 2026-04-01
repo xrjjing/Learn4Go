@@ -1,5 +1,13 @@
 package todo
 
+// 本文件处理“JWT 之外”的安全细节。
+//
+// 重点包括：
+// 1. 登录失败锁定策略
+// 2. refresh token 的生成、存储、校验和旋转
+// 3. 邮箱与密码强度校验
+//
+// 如果登录接口出现 429、refresh token 失效、密码格式被拒绝，优先看这里。
 import (
 	"context"
 	"crypto/rand"
@@ -17,14 +25,14 @@ const (
 	defaultRefreshTTL  = 7 * 24 * time.Hour
 )
 
-// 登录失败记录
+// loginFailure 用于记录同一邮箱在滑动时间窗内的失败次数和锁定状态。
 type loginFailure struct {
 	count        int
 	lastFailedAt time.Time
 	lockedUntil  time.Time
 }
 
-// refreshToken 会话
+// refreshSession 表示 refresh token 在服务端内存表里的会话状态。
 type refreshSession struct {
 	userID    uint
 	expiresAt time.Time
@@ -37,7 +45,7 @@ var (
 	ErrWeakPassword        = errors.New("password must be at least 8 characters with letters and numbers")
 )
 
-// ValidateEmail checks if email format is valid
+// ValidateEmail 在注册和后台创建用户时做格式校验。
 func ValidateEmail(email string) error {
 	_, err := mail.ParseAddress(email)
 	if err != nil {
@@ -46,7 +54,8 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
-// ValidatePassword checks password strength requirements
+// ValidatePassword 目前要求长度不少于 8，且同时包含字母和数字。
+// ValidatePassword：密码强度规则，避免弱口令直接写入用户仓库。
 func ValidatePassword(password string) error {
 	if len(password) < 8 {
 		return ErrWeakPassword
@@ -66,7 +75,8 @@ func ValidatePassword(password string) error {
 	return nil
 }
 
-// recordLoginFailure 记录失败并返回是否锁定及重试时间
+// recordLoginFailure 是 handleLogin 的防暴力破解辅助函数。
+// recordLoginFailure：登录失败后更新计数，并在必要时返回锁定剩余时长。
 func (s *Server) recordLoginFailure(email string) (bool, time.Duration) {
 	s.loginMu.Lock()
 	defer s.loginMu.Unlock()
@@ -117,7 +127,8 @@ func (s *Server) checkLock(email string) (bool, time.Duration) {
 	return false, 0
 }
 
-// generateRefreshToken 生成高熵的 refresh token
+// generateRefreshToken 生成随机 refresh token，本身不包含用户信息；用户绑定关系存放在 refreshStore。
+// generateRefreshToken：生成高熵随机串，避免 refresh token 可预测。
 func generateRefreshToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -126,7 +137,10 @@ func generateRefreshToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-// issueTokens 签发新的 access/refresh，并为用户旋转旧 refresh
+// issueTokens 是登录成功和 refresh 成功后的共同出口。
+//
+// 调用链：handleLogin / handleRefresh -> issueTokens -> 返回 access + refresh。
+// issueTokens：登录/刷新成功后的统一签发入口，同时旋转旧 refresh token。
 func (s *Server) issueTokens(user User) (string, string, int, error) {
 	access, err := s.jwtManager.Generate(user.ID)
 	if err != nil {
@@ -153,7 +167,8 @@ func (s *Server) issueTokens(user User) (string, string, int, error) {
 	return access, refresh, int(s.jwtManager.cfg.TTL.Seconds()), nil
 }
 
-// validateRefresh 校验 refresh token 并返回用户
+// validateRefresh 负责把 refresh token 重新映射回用户，并判断是否过期。
+// validateRefresh：/v1/refresh 处理器进入业务前先调用这里确认 refresh token 是否有效。
 func (s *Server) validateRefresh(token string) (User, error) {
 	s.refreshMu.Lock()
 	session, ok := s.refreshStore[token]
@@ -176,7 +191,7 @@ func (s *Server) validateRefresh(token string) (User, error) {
 	return user, nil
 }
 
-// rotateRefresh 删除旧 token
+// dropRefresh 在 refresh 轮换时使旧 token 立即失效，避免并存。
 func (s *Server) dropRefresh(token string) {
 	s.refreshMu.Lock()
 	delete(s.refreshStore, token)

@@ -12,12 +12,17 @@
     </style>
 </head>
 <body class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
+    <!-- 页面总览：这是 Go TODO API 的最小登录演示页。
+         真实链路是 页面 -> 本页内联脚本 -> auth-helper.js -> /v1/login 与 /v1/refresh。 -->
+    <!-- 单栏工作区：整页只有一个登录卡片，输入区、状态区、反馈区都集中在这里，便于快速验证整条认证链路。 -->
     <div class="card p-4" style="width: 420px;">
     <h4 class="mb-3">🔐 TODO API 登录</h4>
     <p class="text-muted mb-2">演示前端与刷新令牌联动。默认账户：admin@example.com / admin123</p>
+    <!-- 提示区：明确说明本页依赖真实 Go 后端，不走 mock-api.js。 -->
     <div class="alert alert-info py-2 px-3">
         需要后端 <code>cmd/todoapi</code> 运行（可执行 <code>./start-local.sh</code>）。本页不启用 mock；如需 mock，请改用 <code>login.html?mock=true</code>。
     </div>
+    <!-- 输入区：邮箱和密码字段都会被 login() 直接读取并提交到 /v1/login。 -->
     <div class="mb-3">
         <label class="form-label">邮箱</label>
         <input id="email" type="email" class="form-control" placeholder="you@example.com" required>
@@ -26,18 +31,23 @@
         <label class="form-label">密码</label>
         <input id="password" type="password" class="form-control" placeholder="••••••••" required>
     </div>
+    <!-- 状态与辅助操作区：左侧显示当前认证状态，右侧提供退出按钮清空本地 token。 -->
     <div class="d-flex align-items-center justify-content-between mb-3">
         <div class="form-text" id="status-text">尚未登录</div>
         <button id="logout-btn" class="btn btn-outline-secondary btn-sm" type="button">退出</button>
     </div>
+    <!-- 主按钮区：点击后触发 login()，随后串起登录、token 保存和受保护接口访问。 -->
     <button id="login-btn" class="btn btn-primary w-100 mb-3" type="button">登录并获取 Token</button>
+    <!-- 反馈区：分别展示错误提示和成功提示，不参与布局切换，只通过 class 切换显隐。 -->
     <div class="alert alert-danger d-none" id="error-box"></div>
     <div class="alert alert-success d-none" id="success-box"></div>
 </div>
 
+<!-- 脚本依赖区：config.js 提供 todoApiBaseUrl，auth-helper.js 负责 token 存储、401 自动 refresh，下面的内联脚本负责页面按钮和状态联动。 -->
 <script src="config.js"></script>
 <script src="auth-helper.js"></script>
 <script>
+    // 初始化入口：缓存 DOM 节点，并把页面操作绑定到 login()/fetchMe()/AuthClient 上。
     const api = window.AppConfig?.todoApiBaseUrl || '';
     const loginBtn = document.getElementById('login-btn');
     const logoutBtn = document.getElementById('logout-btn');
@@ -45,12 +55,14 @@
     const okBox = document.getElementById('success-box');
     const statusText = document.getElementById('status-text');
 
+    // 状态输出函数：统一把当前链路状态写到提示区，便于观察登录/刷新是否成功。
     function setStatus(text, isError=false) {
         statusText.textContent = text;
         errBox.classList.toggle('d-none', !isError);
         errBox.textContent = isError ? text : '';
     }
 
+    // 登录主链路：读取输入框 -> POST /v1/login -> 交给 AuthClient 保存 token -> 刷新成功提示。
     async function login() {
         errBox.classList.add('d-none');
         okBox.classList.add('d-none');
@@ -82,6 +94,7 @@
         }
     }
 
+    // 受保护接口探活：页面加载后先试打 /v1/todos；若 access 失效，auth-helper.js 会尝试自动 refresh。
     async function fetchMe() {
         const resp = await AuthClient.authFetch(`${api}/v1/todos`, { method: 'GET' });
         const data = await resp.json();
@@ -101,7 +114,7 @@
         okBox.classList.add('d-none');
     });
 
-    // 页面加载后尝试直接调用受保护接口，若 401 将自动刷新
+    // 页面初始化：进入页面先验证本地 token 是否还能访问受保护接口，便于直观看到 refresh 机制是否工作。
     fetchMe().catch(() => setStatus('尚未登录'));
 </script>
 </body>

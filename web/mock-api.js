@@ -1,21 +1,21 @@
 /**
- * Mock API Interceptor
+ * Learn4Go 前端 Mock 拦截层。
  *
- * 优雅的 fetch 拦截器，用于在开发环境下模拟后端 API 响应
+ * 服务页面：
+ * - 主要服务 login.html、admin.html 等老示例页。
+ * - todo-login.html 明确不走它；该页要求真实 TODO API。
  *
- * 特性：
- * - 非侵入式设计：不影响生产环境的真实 API 调用
- * - 灵活的开关机制：支持 URL 参数或 localStorage 控制
- * - 模拟网络延迟：更真实地模拟网络请求
- * - 完整的日志输出：方便调试和追踪
+ * 真实调用链：
+ * 页面脚本发起 fetch -> 本文件判断是否启用 mock -> 若命中则直接返回模拟 Response
+ * -> 模拟数据来自 mock-data.js；若未命中则回落到浏览器原生 fetch。
  *
- * 使用方法：
- * 1. URL 参数方式（临时）：http://localhost/page.html?mock=true
- * 2. localStorage 方式（持久）：localStorage.setItem('mockApi', 'true')
+ * 角色定位：
+ * - 这是“兼容演示层 / 开发预览层”，不是生产逻辑。
+ * - 前端页面看起来能跑，不代表后端真实链路已联通。
  *
- * 停用方法：
- * 1. 移除 URL 中的 ?mock=true
- * 2. localStorage.removeItem('mockApi')
+ * 排查建议：
+ * - 页面明明没启动后端却还能返回数据，多半是这里拦截成功了。
+ * - 如果想验证真实 API，请先确认 localStorage 与 URL 中没有启用 mock。
  */
 
 (function () {
@@ -40,6 +40,7 @@
    * 检查是否启用了模拟模式
    * @returns {boolean} 如果启用了模拟模式则返回 true
    */
+  // mock 开关的唯一判定入口。排查“为什么请求没有打到后端”时先看这里。
   function isMockMode() {
     // 方式 1：URL 参数检查
     const urlParams = new URLSearchParams(window.location.search);
@@ -61,6 +62,7 @@
    * @param {string} url - 完整的 URL 字符串
    * @returns {string} URL 的路径部分
    */
+  // 统一把完整 URL 折叠成 path，方便和 mock-data.js 里的 key 做匹配。
   function extractPathFromUrl(url) {
     try {
       const urlObj = new URL(url, window.location.origin);
@@ -100,6 +102,7 @@
    * @param {number} status - HTTP 状态码
    * @returns {Response} 模拟的 Response 对象
    */
+  // 伪造一个 Response，让页面层无需知道自己拿到的是 mock 还是真实后端响应。
   function createMockResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
       status: status,
@@ -118,6 +121,8 @@
    * @param {string} path - 请求路径
    * @returns {*} 模拟数据或 null
    */
+  // 核心匹配函数：按 METHOD + PATH 优先，再回退到仅 PATH。
+  // 页面按钮点了以后到底命中了哪条 mock，先看这里。
   function findMockData(method, path) {
     if (!window.mockData) {
       log("warn", "mockData 未定义，请确保已加载 mock-data.js");
@@ -171,12 +176,14 @@
   // ==================== Fetch 拦截器 ====================
 
   // 保存原始的 fetch 函数
+  // 保留原生 fetch：只有在 mock 开启且命中数据时才会短路返回，否则仍走真实后端。
   const originalFetch = window.fetch;
 
   /**
    * 拦截后的 fetch 函数
    * 在模拟模式下返回模拟数据，否则调用真实 API
    */
+  // 全局拦截入口：这是页面是否进入 mock 模式的真正生效点。
   window.fetch = function (url, options = {}) {
     // 如果未启用模拟模式，直接调用原始 fetch
     if (!isMockMode()) {
@@ -263,6 +270,7 @@
   }
 
   // 暴露工具函数到全局作用域，方便调试
+  // 暴露调试开关，方便你在浏览器控制台手动开/关 mock，而不需要改页面代码。
   window.mockApiUtils = {
     isMockMode,
     enableMock: () => {

@@ -25,6 +25,9 @@
     </style>
 </head>
 <body>
+    <!-- 页面总览：这是 Learn4Go 的静态首页，用来先介绍项目定位、学习路径和快速开始入口。
+         本页没有专属业务脚本，也不直接请求后端，主要负责把用户继续引导到 portal.html 和 projects.html。 -->
+    <!-- 页面头部导航：固定导航栏，负责在首页 / 学习门户 / 项目实战三个入口之间切换。 -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="index.html">🐹 Learn4Go</a>
@@ -47,6 +50,7 @@
         </div>
     </nav>
 
+    <!-- 页面主视觉区：首屏说明项目定位，CTA 按钮直接把用户带到学习门户。 -->
     <header class="hero">
         <div class="container">
             <h1 class="display-4">Learn4Go - Go 语言学习与实战</h1>
@@ -55,7 +59,9 @@
         </div>
     </header>
 
+    <!-- 页面主体：采用单栏纵向布局，按“核心特性 -> 快速开始 -> 学习路径”三个阅读区块组织。 -->
     <main class="container my-5">
+        <!-- 核心特性区：静态卡片说明项目卖点，帮助第一次进入项目的人快速理解这个仓库的学习定位。 -->
         <section id="features" class="text-center py-5">
             <h2 class="mb-5">核心特性</h2>
             <div class="row">
@@ -89,6 +95,7 @@
             </div>
         </section>
 
+        <!-- 快速开始区：展示命令行启动方式，帮助第一次进入仓库的人快速跑起环境。 -->
         <section id="quick-start" class="quick-start py-5">
             <div class="text-center">
                 <h2 class="mb-4">快速开始</h2>
@@ -113,6 +120,7 @@ cd deployments && docker-compose up -d
             </div>
         </section>
 
+        <!-- 学习路线区：按阶段解释仓库的学习顺序，是“理解项目怎么读”的静态说明区。 -->
         <section id="learning-path" class="py-5">
             <div class="text-center">
                 <h2 class="mb-5">学习路线</h2>
@@ -141,6 +149,7 @@ cd deployments && docker-compose up -d
         </section>
     </main>
 
+    <!-- 页面底部：静态版权区，无动态渲染逻辑和业务交互。 -->
     <footer class="py-4 bg-light text-center text-muted">
         <div class="container">
             <p class="mb-0">&copy; 2025 Learn4Go. All Rights Reserved.</p>

@@ -19,6 +19,15 @@
 //  4. 访问: curl http://localhost:8888/api/v1/todos
 package main
 
+// Package main 演示基于 Gin 的 API 网关实现。
+//
+// 核心职责：
+// 1. 对外暴露统一入口 `/api/*`
+// 2. 通过中间件做 CORS、日志、认证占位、限流
+// 3. 将 `/api/v1/*` 代理到真实后端 `/v1/*`
+//
+// 当前最常见的实际链路是：前端 -> Gin Gateway(:8888) -> TODO API(:8080)。
+// 如果页面通过网关访问失败，优先看 setupRouter 和 createReverseProxy。
 import (
 	"log"
 	"net/http"
@@ -31,7 +40,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// BackendConfig 后端服务配置
+// BackendConfig 描述单个后端服务的名称、目标地址和超时。
 type BackendConfig struct {
 	Name    string // 服务名称
 	Target  string // 服务地址
@@ -46,7 +55,7 @@ func getEnv(key, defaultVal string) string {
 	return defaultVal
 }
 
-// 后端服务配置表（支持环境变量覆盖）
+// backends 定义网关可代理的服务清单。
 var backends = map[string]BackendConfig{
 	"todos": {Name: "TODO API", Target: getEnv("TODO_API_URL", "http://localhost:8080"), Timeout: 10 * time.Second},
 	"users": {Name: "User API", Target: getEnv("USER_API_URL", "http://localhost:8081"), Timeout: 10 * time.Second},
@@ -158,7 +167,8 @@ func RateLimitMiddleware(requestsPerSecond int) gin.HandlerFunc {
 	}
 }
 
-// createReverseProxy 创建反向代理处理函数
+// createReverseProxy 是最关键的桥接点：它把前端看到的 `/api/...` 改写为后端真正识别的路径。
+// createReverseProxy：真正的转发核心，会把 /api 前缀剥离后再送往下游。
 func createReverseProxy(target string) gin.HandlerFunc {
 	targetURL, err := url.Parse(target)
 	if err != nil {
@@ -167,7 +177,7 @@ func createReverseProxy(target string) gin.HandlerFunc {
 
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-	// 自定义 Director
+	// Director 会在请求真正发到后端前改写 URL、Host 和透传头。
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
@@ -192,6 +202,8 @@ func createReverseProxy(target string) gin.HandlerFunc {
 	}
 }
 
+// setupRouter 负责组装网关对外暴露的全部路由和中间件链。
+// setupRouter：拼装根路由、健康检查和 /api 分组下的反向代理规则。
 func setupRouter() *gin.Engine {
 	// 设置 Gin 模式
 	gin.SetMode(gin.ReleaseMode)
@@ -221,7 +233,7 @@ func setupRouter() *gin.Engine {
 		})
 	})
 
-	// API 路由组（需要认证）
+	// `/api` 组是网关的业务入口；前端通常访问的就是这一组路径。
 	api := r.Group("/api")
 	api.Use(AuthMiddleware())
 	api.Use(RateLimitMiddleware(100)) // 每秒 100 请求
@@ -242,6 +254,8 @@ func setupRouter() *gin.Engine {
 	return r
 }
 
+// main 只负责启动 Gin 网关进程，具体代理规则已经在 setupRouter 中定义。
+// main：启动 Gin 网关进程。排查页面通过 8888 访问异常时，先看这里打印的后端映射。
 func main() {
 	r := setupRouter()
 

@@ -1,8 +1,18 @@
 /**
- * Frontend Common Utilities
+ * Learn4Go 通用前端工具层。
  *
- * 提供安全的 API 客户端和通用组件渲染器
- * 基于 Gemini 和 Codex 的专业建议实现
+ * 文件职责：
+ * - 给 admin.html、log-detective.html 这类页面提供公共 API 调用、调试日志、表格渲染和 Toast。
+ * - 这里不关心某个具体业务页面，只提供“页面脚本可复用的底层能力”。
+ *
+ * 真实调用链：
+ * - 页面按钮点击 -> 页面内联脚本调用 apiClient / renderGenericTable / toggleDebugPanel
+ * - apiClient 内部负责脱敏日志 + fetch + 错误抛出
+ * - 页面再决定如何把结果渲染进表格、日志区或提示区。
+ *
+ * 排查建议：
+ * - 如果 admin.html 的调试面板没有日志，先看 logApiActivity() 是否拿到 #log-container。
+ * - 如果 log-detective.html 请求失败但页面没有清晰报错，先看 apiClient() 的异常抛出链。
  */
 
 // ============================================
@@ -14,6 +24,8 @@
  * @param {string|FormData} body - 请求体
  * @returns {string} 脱敏后的字符串
  */
+// sanitizeBody 只服务调试日志，不改变真实请求体。
+// 作用是避免密码、token 等敏感字段直接被写进页面调试面板。
 function sanitizeBody(body) {
     if (!body) return '';
 
@@ -56,6 +68,9 @@ function sanitizeBody(body) {
  * @param {any} data - 数据内容
  * @param {number} duration - 请求耗时（毫秒）
  */
+// logApiActivity 把请求/响应/错误投递到页面右下角或侧边的调试面板。
+// 依赖页面提前准备好 #log-container；没有容器时会直接静默跳过。
+// 调试面板写入：admin.html 底部的 #log-container 就是靠这里持续追加请求/响应日志。
 function logApiActivity(type, method, url, data, duration = 0) {
     const logContainer = document.getElementById('log-container');
     if (!logContainer) return; // 如果没有日志面板，跳过
@@ -114,6 +129,9 @@ function logApiActivity(type, method, url, data, duration = 0) {
  * @param {object} options - fetch 选项
  * @returns {Promise<any>} 响应数据
  */
+// apiClient 是 common.js 最核心的统一请求入口。
+// 它不处理 token 自动刷新；若页面需要 refresh 机制，应走 auth-helper.js 的 AuthClient。
+// 统一请求入口：负责 fetch、日志记录、错误抛出和 JSON 解析。
 async function apiClient(url, options = {}) {
     const method = options.method || 'GET';
     const startTime = Date.now();
@@ -156,6 +174,9 @@ async function apiClient(url, options = {}) {
  *   { key: 'roles', render: (roles) => roles.map(r => r.name).join(', ') }
  * ]);
  */
+// renderGenericTable 负责把“数组数据”安全灌进指定 tbody。
+// admin.html 的用户/角色/权限列表，后续都可复用这一层。
+// 通用表格渲染：把后端返回数组映射成 tbody 内容，admin.html 的多个列表都复用它。
 function renderGenericTable(elementId, data, columns) {
     const tbody = document.getElementById(elementId);
 
@@ -222,6 +243,8 @@ function renderGenericTable(elementId, data, columns) {
  * 切换调试面板显示状态
  * @param {boolean} show - 是否显示
  */
+// 调试面板开关，常见于 admin.html 这种需要边查接口边看日志的页面。
+// 调试面板显隐：与 admin.html 右上角的“调试模式”开关联动。
 function toggleDebugPanel(show) {
     const debugPanel = document.getElementById('debug-panel');
     if (debugPanel) {
@@ -232,6 +255,8 @@ function toggleDebugPanel(show) {
 /**
  * 清空调试日志
  */
+// 清空调试面板现有输出，不会影响真实业务状态。
+// 调试日志清理：只清空前端面板内容，不影响真实网络请求。
 function clearDebugLogs() {
     const logContainer = document.getElementById('log-container');
     if (logContainer) {
@@ -248,6 +273,8 @@ function clearDebugLogs() {
  * @param {string} message - 提示消息
  * @param {string} type - 类型 (success/error/info)
  */
+// 轻量 Toast；当页面没有引入更完整的 Toast 体系时，可直接用它给出结果反馈。
+// 轻量提示：给没有引入完整组件体系的页面复用一个最小消息提示。
 function showToast(message, type = 'info') {
     // 简单实现，可以后续增强为更美观的 Toast 组件
     const colors = {

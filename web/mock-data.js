@@ -1,13 +1,22 @@
 /**
- * Mock Data for Frontend Development
+ * Learn4Go 前端 Mock 数据仓库。
  *
- * 用于前端开发的模拟数据，可以在不启动后端服务的情况下预览页面交互
+ * 文件职责：
+ * - 给 mock-api.js 提供静态响应数据。
+ * - 覆盖 login/admin/日志查询等老示例页面需要的典型接口。
  *
- * 使用方式：
- * 1. URL 参数：访问页面时添加 ?mock=true
- * 2. localStorage：在控制台执行 localStorage.setItem('mockApi', 'true')
+ * 使用关系：
+ * - 页面本身不会直接读取这里。
+ * - 真正的读取者是 mock-api.js；它根据请求方法和路径在这里找匹配项。
+ *
+ * 排查建议：
+ * - 页面展示内容和真实后端不一致时，先确认是不是这里的模拟数据在生效。
+ * - 想补新的 mock 接口，优先保持 key 规则与 mock-api.js 的匹配逻辑一致。
  */
 
+// key 规则说明：
+// 1. 仅路径，如 '/auth/login'，适合默认 GET 或简单场景。
+// 2. 'METHOD /path'，适合同一路径下区分 POST/PUT/DELETE。
 const mockData = {
   // GET /todos - Todo 列表
   '/todos': [
@@ -231,7 +240,8 @@ const mockData = {
   }
 };
 
-// 暴露给全局作用域，供 mock-api.js 使用
+// 暴露给全局作用域，供 mock-api.js 使用。
+// 如果页面启用了 mock，最终就是由 mock-api.js 读取 window.mockData 来构造响应。
 window.mockData = mockData;
 
 // 如果是在模块环境中（例如 Node.js），也支持导出

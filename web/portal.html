@@ -140,6 +140,9 @@
     </style>
   </head>
   <body>
+    <!-- 页面总览：这是 Learn4Go 的核心门户页，结构上是“顶部状态栏 + 左侧章节导航 + 右侧内容/示例区”。
+         真实链路是 portal.html 内联脚本 -> config.js 提供基址 -> 健康检查 TODO API/Gateway，并在前端动态渲染导航、学习进度和示例列表。 -->
+    <!-- 页面头部：固定导航栏负责站点跳转，同时在右上角展示 TodoAPI / Gateway 在线状态。 -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
       <div class="container-fluid">
         <a class="navbar-brand fw-bold" href="#">🐹 Learn4Go</a>
@@ -185,8 +188,10 @@
       </div>
     </nav>
 
+    <!-- 页面主体骨架：左侧是折叠导航栏，右侧是主要阅读区和示例操作区。 -->
     <div class="container-fluid">
       <div class="row">
+        <!-- 左侧章节导航：三个列表容器会由内联脚本动态写入章节、框架和项目清单。 -->
         <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
           <div class="position-sticky pt-3">
             <div class="section-header">基础章节</div>
@@ -200,7 +205,9 @@
           </div>
         </nav>
 
+        <!-- 右侧主工作区：先显示学习进度和欢迎内容，再展示可运行示例过滤器与结果列表。 -->
         <main class="main-content">
+          <!-- 学习进度区：进度条和明细由本页脚本根据 localStorage 中的完成状态动态刷新。 -->
           <div class="progress-tracker">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h5 class="mb-0">学习进度</h5>
@@ -226,6 +233,7 @@
             >
           </div>
 
+          <!-- 欢迎与导航卡片区：这是首次进入页面默认看到的内容，按钮会滚动到左侧对应导航分组。 -->
           <div id="content-display">
             <h1>欢迎来到 Go 学习门户</h1>
             <p class="lead">从左侧导航选择章节开始你的 Go 语言学习之旅。</p>
@@ -337,6 +345,7 @@
 
           <hr class="my-5" />
 
+          <!-- 示例总览区：展示可直接复制/运行的命令，是页面下半部分最主要的动态渲染区域。 -->
           <h4>可运行示例</h4>
           <p class="text-muted">这些示例可以直接运行查看 Go 代码效果。</p>
           <p class="small text-muted">
@@ -346,6 +355,7 @@
             <span class="badge bg-secondary">本地</span>
             <span class="badge bg-warning text-dark">Mock</span>
           </p>
+          <!-- 示例过滤按钮区：点击后调用 setExampleFilter()，控制下方列表按标签筛选。 -->
           <div class="btn-group mb-3" role="group" aria-label="示例过滤">
             <button
               class="btn btn-sm btn-outline-primary active"
@@ -430,15 +440,18 @@
               📄 基础速查
             </button>
           </div>
+          <!-- 示例列表渲染区：由 renderExamples() 根据过滤条件动态写入复制/运行按钮。 -->
           <div class="list-group example-list" id="example-list"></div>
         </main>
       </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 脚本依赖：config.js 提供 Docker/本地环境的地址差异；本页主要业务逻辑都在下面的内联脚本里。 -->
     <script src="config.js"></script>
 
     <script>
+      // 初始化入口：页面加载后检查服务状态、构建左侧导航、恢复学习进度并渲染示例列表。
       document.addEventListener("DOMContentLoaded", function () {
         // 服务配置（Docker 和本地开发使用不同的健康检查端点）
         const isDocker =
@@ -448,6 +461,7 @@
           window.AppConfig?.todoApiBaseUrl ||
           (isDocker ? "/api" : "http://127.0.0.1:8080");
 
+        // 服务状态配置：右上角状态徽章会根据这些健康检查地址刷新颜色和提示。
         const services = {
           todoapi: {
             url: baseTodoApi + "/v1/todos",
@@ -464,6 +478,7 @@
         };
 
         // 章节数据
+        // 左侧导航数据源：章节、框架、项目都先在前端定义，再统一渲染到 sidebar。
         const chapters = [
           {
             id: "ch01",
@@ -787,6 +802,7 @@
         let exampleFilter = "all";
 
         // DOM 元素
+        // 关键 DOM 节点：后续渲染、进度刷新和内容切换都围绕这些容器完成。
         const chapterList = document.getElementById("chapter-list");
         const frameworkList = document.getElementById("framework-list");
         const projectList = document.getElementById("project-list");
@@ -802,6 +818,7 @@
           chapters.length + frameworks.length + projects.length;
 
         // 服务状态检测
+        // 服务探活：启动时并发请求 TodoAPI/Gateway，结果反映到右上角 badge。
         async function checkServices() {
           const updateBadge = (id, status) => {
             const badge = document.getElementById(id);
@@ -880,6 +897,7 @@
         };
 
         // 渲染函数
+        // 左侧列表渲染：把章节元数据变成可点击导航项，并附带完成状态提示。
         function renderNavList(items, container, prefix) {
           container.innerHTML = "";
           items.forEach((item, index) => {
@@ -903,6 +921,7 @@
           });
         }
 
+        // 过滤器切换：修改当前过滤条件并重新渲染示例列表。
         function setExampleFilter(filter, btn) {
           exampleFilter = filter;
           document
@@ -912,6 +931,7 @@
           renderExamples();
         }
 
+        // 示例列表渲染：决定哪些项目显示，并为每项生成“复制/运行”按钮。
         function renderExamples() {
           exampleList.innerHTML = "";
           examples.forEach((example) => {
@@ -957,6 +977,7 @@
           });
         }
 
+        // 进度刷新：根据 localStorage 中的完成项数量更新进度条和文字。
         function updateProgress() {
           const completedCount = completedItems.length;
           const percentage =
@@ -968,6 +989,7 @@
           progressDetail.textContent = `已完成 ${completedCount} / ${totalItems} 章节`;
         }
 
+        // 主内容切换：点击左侧任一导航项后，把说明内容和操作按钮写入右侧内容区。
         function displayContent(itemId, itemName, itemType, itemCmd) {
           const isCompleted = completedItems.includes(itemId);
 
@@ -1003,6 +1025,7 @@ func main() {
         }
 
         // 事件处理
+        // 导航事件绑定：把左侧列表点击统一收口到 displayContent()。
         function setupNavListeners(container) {
           container.addEventListener("click", function (event) {
             const link = event.target.closest("a.nav-link");
@@ -1024,6 +1047,7 @@ func main() {
         }
 
         // 初始化渲染
+        // 首屏渲染入口：集中执行导航构建、示例刷新、进度刷新和服务检查。
         function render() {
           renderNavList(chapters, chapterList, "ch");
           renderNavList(frameworks, frameworkList, "fw");

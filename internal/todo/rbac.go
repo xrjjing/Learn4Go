@@ -1,5 +1,9 @@
 package todo
 
+// 本文件处理“用户能不能做这件事”。
+//
+// 认证解决“你是谁”，RBAC 解决“你有没有权限”。
+// 在当前项目里，RBAC 主要保护 `/v1/todos*` 相关接口，并对普通用户追加资源归属检查。
 import (
 	"errors"
 	"net/http"
@@ -39,12 +43,13 @@ type Permission struct {
 	Action   Action
 }
 
-// RBACManager RBAC管理器
+// RBACManager 保存角色到权限列表的映射，是 authzMiddleware 判定授权的依据。
 type RBACManager struct {
 	permissions map[Role][]Permission
 }
 
-// NewRBACManager 创建RBAC管理器
+// NewRBACManager 定义了当前系统的默认权限矩阵。
+// NewRBACManager：预置三种角色对 todos 资源的权限矩阵。
 func NewRBACManager() *RBACManager {
 	return &RBACManager{
 		permissions: map[Role][]Permission{
@@ -68,6 +73,7 @@ func NewRBACManager() *RBACManager {
 }
 
 // CheckPermission 检查角色是否有权限执行操作
+// CheckPermission：权限判断的最终落点。
 func (m *RBACManager) CheckPermission(role Role, resource Resource, action Action) bool {
 	permissions, ok := m.permissions[role]
 	if !ok {
@@ -82,7 +88,7 @@ func (m *RBACManager) CheckPermission(role Role, resource Resource, action Actio
 	return false
 }
 
-// GetResourceFromRequest 从请求中解析资源
+// GetResourceFromRequest 通过 URL 粗粒度识别资源类型，当前主要识别 todos。
 func GetResourceFromRequest(r *http.Request) Resource {
 	path := strings.Trim(r.URL.Path, "/")
 	if strings.Contains(path, "todos") {
@@ -122,7 +128,11 @@ func GetTodoIDFromRequest(r *http.Request) (int, error) {
 	return 0, errors.New("no todo ID in request")
 }
 
-// authzMiddleware RBAC授权中间件
+// authzMiddleware 位于 authMiddleware 之后。
+//
+// 调用链：JWT 鉴权成功 -> 取用户角色 -> 判定角色权限 -> 必要时校验 TODO 归属。
+// 如果接口返回 403，优先从这里看。
+// authzMiddleware：从请求解析资源和动作，再结合当前用户角色决定是否放行。
 func (s *Server) authzMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 获取用户信息

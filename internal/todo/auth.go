@@ -1,5 +1,15 @@
 package todo
 
+// 本文件聚焦“认证基础能力”，不直接做业务路由分发。
+//
+// 它提供三块最核心的能力：
+// 1. JWT 的生成与解析
+// 2. 密码的 bcrypt 加密与校验
+// 3. 鉴权中间件，把 Bearer Token 里的 userID 写回请求上下文
+//
+// 页面排查建议：
+// - 登录成功但后续接口 401：优先看 authMiddleware / Parse
+// - token 看起来正确却解析失败：看 Generate/Parse 是否使用了同一套密钥与 TTL
 import (
 	"context"
 	"errors"
@@ -13,10 +23,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// ctxUserIDKey 用于在上下文中存放用户 ID
+// ctxUserIDKey 是私有上下文 key，避免和其他 context key 冲突。
+// Handler 层通过 GetUserID 读取它，从而把“认证结果”传给后续业务处理。
 type ctxUserIDKey struct{}
 
-// JWTManager 管理令牌生成与校验。
+// JWTManager 是访问令牌的统一入口。
+// 上游由 handleLogin / handleRefresh 调用 Generate，下游由 authMiddleware 调用 Parse。
 type JWTManager struct {
 	cfg JWTConfig
 }
@@ -37,7 +49,8 @@ func NewJWTManager(secret string, ttl time.Duration) *JWTManager {
 	}
 }
 
-// Generate 生成用户访问令牌。
+// Generate 只负责生成 access token。refresh token 的生成与轮换逻辑在 security.go。
+// Generate：登录成功后由 security.go 中的 issueTokens() 调用，用来签发 access token。
 func (m *JWTManager) Generate(userID uint) (string, error) {
 	claims := jwt.RegisteredClaims{
 		Subject:   strconv.FormatUint(uint64(userID), 10),
@@ -48,7 +61,8 @@ func (m *JWTManager) Generate(userID uint) (string, error) {
 	return token.SignedString([]byte(m.cfg.Secret))
 }
 
-// Parse 验证令牌并返回用户 ID。
+// Parse 校验签名和 claims，并把 subject 还原成 uint userID。
+// Parse：认证中间件每次放行受保护接口前都会走到这里。
 func (m *JWTManager) Parse(tokenStr string) (uint, error) {
 	t, err := jwt.ParseWithClaims(tokenStr, &jwt.RegisteredClaims{}, func(token *jwt.Token) (any, error) {
 		if token.Method != jwt.SigningMethodHS256 {
@@ -70,7 +84,7 @@ func (m *JWTManager) Parse(tokenStr string) (uint, error) {
 	return uint(id), nil
 }
 
-// HashPassword 使用 bcrypt 加密密码
+// HashPassword 在注册和后台创建用户时使用，避免明文密码进入存储层。
 func HashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -79,20 +93,25 @@ func HashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
-// CheckPassword 验证密码
+// CheckPassword 用于登录时比对用户输入和存储的 hash。
 func CheckPassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
-// GetUserID 从上下文中获取用户ID
+// GetUserID 是 handler/rbac 层读取当前登录用户的统一入口。
 func GetUserID(ctx context.Context) (uint, bool) {
 	userID, ok := ctx.Value(ctxUserIDKey{}).(uint)
 	return userID, ok
 }
 
-// authMiddleware 统一处理需要认证的 API 请求。
-// 仅对少数公开端点放行，其余路径都要求携带 Bearer Token。
+// authMiddleware 负责把“登录态”转换为“业务上下文”。
+//
+// 链路位置：
+// 前端 Authorization 头 → authMiddleware → JWTManager.Parse → context 写入 userID → 业务 handler / RBAC 继续处理
+//
+// 如果 /v1/me、/v1/todos 等接口返回 401，优先看这里。
+// authMiddleware：统一保护受限接口，并把认证结果写进上下文供后续 handler/RBAC 读取。
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 公开路径（无需认证）

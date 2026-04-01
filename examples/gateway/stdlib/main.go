@@ -12,6 +12,14 @@
 //  3. 通过网关访问: curl http://localhost:8888/api/v1/todos
 package main
 
+// Package main 演示不依赖第三方框架的标准库网关写法。
+//
+// 适合用于理解最朴素的网关组成：
+// - 中间件链如何包装 handler
+// - 反向代理如何转发请求
+// - 路由分发如何把 `/api/v1/*` 映射到具体后端
+//
+// 如果想看“网关最小可用版本”是怎样搭起来的，这个文件是最佳入口。
 import (
 	"log"
 	"net/http"
@@ -21,7 +29,7 @@ import (
 	"time"
 )
 
-// 后端服务地址配置
+// backends 是路径前缀到后端地址的映射表。
 // 通过路径前缀 /api/v1/* 转发到实际的 /v1/* 接口
 var backends = map[string]string{
 	"/api/v1/todos": "http://localhost:8080", // TODO API 服务
@@ -33,9 +41,10 @@ var backends = map[string]string{
 // 这种模式允许我们像洋葱一样层层包装处理逻辑
 type middleware func(http.Handler) http.Handler
 
-// chain 将多个中间件串联起来
+// chain 把多个中间件按洋葱模型包起来，最终形成一个完整的 HTTP 处理链。
 // 执行顺序：第一个中间件最外层，最后一个最内层
 // 例如: chain(a, b, c)(handler) => a(b(c(handler)))
+// chain：按洋葱模型组合多个中间件。
 func chain(middlewares ...middleware) middleware {
 	return func(next http.Handler) http.Handler {
 		for i := len(middlewares) - 1; i >= 0; i-- {
@@ -123,8 +132,9 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// createProxy 创建反向代理处理器
+// createProxy 返回真正负责转发请求的 handler。
 // target: 后端服务地址，如 "http://localhost:8080"
+// createProxy：构造标准库 ReverseProxy，并负责改写目标主机和错误处理。
 func createProxy(target string) http.Handler {
 	targetURL, err := url.Parse(target)
 	if err != nil {
@@ -152,7 +162,8 @@ func createProxy(target string) http.Handler {
 	return proxy
 }
 
-// router 简单的路由分发器
+// router 是标准库版网关的核心分发器：健康检查直接返回，其余路径按前缀找后端。
+// router：根据路径前缀选择后端，并把 /api/v1/* 改写成后端实际可识别的 /v1/*。
 func router() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -184,6 +195,8 @@ func router() http.Handler {
 	})
 }
 
+// main 负责把中间件和 router 组装成最终 server，并监听 8888 端口。
+// main：把中间件和路由拼起来后启动标准库网关。
 func main() {
 	// 组装中间件链
 	// 执行顺序: cors -> logging -> auth -> router

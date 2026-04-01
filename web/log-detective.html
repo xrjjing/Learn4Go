@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- 页面总览：这是日志侦探演示页，结构上是“输入日志 -> 提交分析 -> 渲染统计和表格结果”的单页工作台。 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日志侦探 - Python学习平台</title>
+    <!-- 脚本依赖：config.js 提供 API_BASE，common.js 提供 apiClient；本页自身只负责组装请求和渲染结果。 -->
     <script src="config.js"></script>
     <script src="common.js"></script>
     <style>
@@ -43,11 +45,14 @@ th, td { text-align: left; padding: 0.75rem 1.5rem; border-bottom: 1px solid var
     </style>
 </head>
 <body>
+    <!-- 页面骨架：上方是说明区，中间是日志输入和按钮区，下方是默认隐藏的分析结果区。 -->
     <div class="container">
+        <!-- 页面头部：说明这是前端到网关再到分析服务的链路演示页。 -->
         <div class="header">
             <h1>🕵️ 日志侦探</h1>
             <p>端到端练习：前端 → 网关 → Python分析服务</p>
         </div>
+        <!-- 输入工作区：用户粘贴原始日志文本，并通过右侧按钮触发样例填充或分析请求。 -->
         <div class="input-section">
             <h2>提交日志</h2>
             <textarea id="log-input" placeholder="粘贴服务器日志..."></textarea>
@@ -56,16 +61,20 @@ th, td { text-align: left; padding: 0.75rem 1.5rem; border-bottom: 1px solid var
                 <button class="btn btn-primary" id="analyze-btn" onclick="analyze()">分析日志</button>
             </div>
         </div>
+        <!-- 结果区：默认隐藏，分析成功后通过给 #results 添加 active 类显示。 -->
         <div id="results" class="results">
+            <!-- 顶部统计卡片：快速概览总行数、错误数和警告数。 -->
             <div class="stats">
                 <div class="stat-card"><div>总行数</div><div class="stat-value" id="stat-lines">0</div></div>
                 <div class="stat-card"><div>错误</div><div class="stat-value" id="stat-errors">0</div></div>
                 <div class="stat-card"><div>警告</div><div class="stat-value" id="stat-warnings">0</div></div>
             </div>
+            <!-- 表格结果区一：渲染 suspicious_ips 列表。 -->
             <div class="panel">
                 <div class="panel-header">可疑IP</div>
                 <table><thead><tr><th>IP</th><th>次数</th><th>原因</th></tr></thead><tbody id="ip-table"></tbody></table>
             </div>
+            <!-- 表格结果区二：渲染 critical_errors 列表。 -->
             <div class="panel">
                 <div class="panel-header">关键错误</div>
                 <table><thead><tr><th>级别</th><th>消息</th><th>行号</th></tr></thead><tbody id="error-table"></tbody></table>
@@ -73,10 +82,13 @@ th, td { text-align: left; padding: 0.75rem 1.5rem; border-bottom: 1px solid var
         </div>
     </div>
     <script>
+// 初始化入口：从 AppConfig 取 API_BASE，并把按钮点击流量收敛到 loadSample()/analyze()。
 const API_BASE = window.AppConfig?.apiBaseUrl ?? window.API_BASE_URL ?? '';
+// 示例填充：快速写入一段演示日志，方便不准备真实日志时直接体验结果渲染。
 function loadSample() {
     document.getElementById('log-input').value = '2023-10-27 10:00:01 [INFO] Service started\n2023-10-27 10:05:23 [WARN] High memory from 192.168.1.10\n2023-10-27 10:06:01 [ERROR] Database failed\n2023-10-27 10:07:12 [ERROR] Login failed from 203.0.113.42';
 }
+// 核心分析链路：读取 textarea -> 调用 apiClient -> 更新统计卡片和两张结果表。
 async function analyze() {
     const input = document.getElementById('log-input').value;
     if (!input.trim()) return alert('请输入日志');

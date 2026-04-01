@@ -22,6 +22,9 @@
     </style>
 </head>
 <body>
+    <!-- 页面总览：这是项目实战总览页，用静态卡片把仓库里的代表性项目分门别类展示出来。
+         本页没有专属数据加载逻辑，所有“查看源码”按钮都只是前端提示，真实源码仍需回到仓库目录查看。 -->
+    <!-- 页面头部导航：负责在首页、学习门户、项目实战三张静态页之间跳转。 -->
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="index.html">🐹 Learn4Go</a>
@@ -44,6 +47,7 @@
         </div>
     </nav>
 
+    <!-- 页面头图区：先说明本页作用，即通过项目卡片快速建立“学完能做什么”的认知。 -->
     <header class="page-header">
         <div class="container">
             <h1 class="display-5 fw-bold">项目实战</h1>
@@ -51,7 +55,9 @@
         </div>
     </header>
 
+    <!-- 页面主体：上半部分是项目卡片网格，下半部分是返回学习门户的收口入口。 -->
     <main class="container my-5">
+        <!-- 项目卡片区：这里是主要浏览区；每张卡片都对应仓库中的一个可运行示例或可执行入口，不直接发 API。 -->
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <!-- Project 1: CLI -->
             <div class="col">
@@ -156,6 +162,7 @@
             </div>
         </div>
 
+        <!-- 页面尾部行动区：看完卡片后引导用户回到 portal.html，继续按学习路径浏览。 -->
         <section class="mt-5 pt-5 border-top">
             <div class="text-center">
                 <h3 class="mb-4">准备好开始了吗？</h3>
@@ -165,6 +172,7 @@
         </section>
     </main>
 
+    <!-- 页面底部：静态收尾区，没有状态切换或接口调用。 -->
     <footer class="py-4 bg-light text-center text-muted mt-5">
         <div class="container">
             <p class="mb-0">&copy; 2025 Learn4Go. All Rights Reserved.</p>

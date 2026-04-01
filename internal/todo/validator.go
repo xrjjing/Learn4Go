@@ -1,10 +1,14 @@
 package todo
 
+// 本文件集中定义请求 DTO 和基础校验规则。
+//
+// 当前 handler.go 里仍有部分手写 JSON / 非空校验，这里更像“统一约束入口”和后续收口点。
+// 如果后续要把校验逻辑标准化，通常会先扩展这里。
 import (
 	"github.com/go-playground/validator/v10"
 )
 
-// 全局验证器实例
+// validate 是包级共享验证器，避免每次请求都重复创建 validator 实例。
 var validate = validator.New()
 
 // RegisterRequest 注册请求
@@ -34,12 +38,14 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
-// ValidateStruct 验证结构体
+// ValidateStruct 是 handler 层可复用的统一入口。
+// ValidateStruct：handler 收到请求体后最先经过的结构校验入口。
 func ValidateStruct(s interface{}) error {
 	return validate.Struct(s)
 }
 
-// FormatValidationError 格式化验证错误为用户友好的消息
+// FormatValidationError 把 validator 的底层错误翻译成更适合前端展示的消息。
+// FormatValidationError：把 validator 的底层错误转成更友好的可返回消息。
 func FormatValidationError(err error) string {
 	if validationErrors, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range validationErrors {

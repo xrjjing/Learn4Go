@@ -1,5 +1,12 @@
 package todo
 
+// 本文件实现一个教学用途的内存限流器。
+//
+// 在 TODO API 中它属于可选中间件：
+// - 若 NewServer 注入 WithRateLimiter，则会进入 Handler() 的中间件链
+// - 若未注入，则业务接口不会经过这一层
+//
+// 如果接口突然大量返回 429，可从这里确认窗口大小、限额和 clientIP 的取值。
 import (
 	"context"
 	"net/http"
@@ -8,7 +15,7 @@ import (
 	"time"
 )
 
-// RateLimiter 基于内存的滑动窗口限流（简化版，便于演示）
+// RateLimiter 按客户端维度记录时间窗内的请求时间列表。
 type RateLimiter struct {
 	mu      sync.Mutex
 	clients map[string]*ClientInfo
@@ -24,6 +31,7 @@ type ClientInfo struct {
 }
 
 // NewRateLimiter 创建限流器。
+// NewRateLimiter：创建限流器并启动后台清理协程。
 func NewRateLimiter(window time.Duration, limit int) *RateLimiter {
 	limiter := &RateLimiter{
 		clients: make(map[string]*ClientInfo),
@@ -44,6 +52,7 @@ func (r *RateLimiter) Stop() {
 }
 
 // cleanup 定期清理过期的客户端信息
+// cleanup：定期清理长时间未访问的客户端状态，避免内存无限增长。
 func (r *RateLimiter) cleanup() {
 	ticker := time.NewTicker(r.window * 2)
 	defer ticker.Stop()
@@ -65,7 +74,8 @@ func (r *RateLimiter) cleanup() {
 	}
 }
 
-// Middleware 限流中间件。
+// Middleware 把 Allow 的判断结果翻译成 HTTP 429。
+// Middleware：把限流判断封装成标准 http.Handler 中间件。
 func (r *RateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		key := clientIP(req)
@@ -78,7 +88,8 @@ func (r *RateLimiter) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// Allow 判断当前请求是否通过限流。
+// Allow 是核心判定逻辑：清理窗口外记录，判断当前请求是否超限。
+// Allow：滑动窗口核心判断逻辑。
 func (r *RateLimiter) Allow(ctx context.Context, key string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -115,7 +126,7 @@ func (r *RateLimiter) Allow(ctx context.Context, key string) bool {
 	return true
 }
 
-// clientIP 提取客户端 IP（优先 X-Forwarded-For）
+// clientIP 优先取代理透传头，便于网关或反向代理场景下识别真实来源。
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")

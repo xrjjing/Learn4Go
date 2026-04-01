@@ -1,5 +1,9 @@
 package todo
 
+// 本文件描述“用户数据从哪里来”。
+//
+// 当前仓库里，登录、当前用户、后台用户管理等功能都默认依赖 MemoryUserStore。
+// 如果后续要接数据库用户体系，通常会先从这个接口层扩展，而不是直接改 handler。
 import (
 	"context"
 	"errors"
@@ -13,7 +17,8 @@ var (
 	ErrEmailExists  = errors.New("email already exists")
 )
 
-// User 用户实体
+// User 是认证和 RBAC 共同依赖的用户模型。
+// PasswordHash 不对外输出，Role 会被 handler.go 用于权限分支。
 type User struct {
 	ID           uint      `json:"id"`
 	Email        string    `json:"email"`
@@ -22,14 +27,15 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-// UserStore 抽象用户存储。
+// UserStore 把“用户来源”从业务层里抽象出来，便于后续替换为数据库或外部身份源。
 type UserStore interface {
 	Create(ctx context.Context, email, passwordHash string) (User, error)
 	FindByEmail(ctx context.Context, email string) (User, error)
 	FindByID(ctx context.Context, id uint) (User, error)
 }
 
-// MemoryUserStore 内存用户存储（用于测试/演示）
+// MemoryUserStore 是当前默认实现。
+// todo.NewServer() 不额外注入 UserStore 时，就会使用它。
 type MemoryUserStore struct {
 	mu        sync.Mutex
 	seq       uint
@@ -37,7 +43,8 @@ type MemoryUserStore struct {
 	usersByID map[uint]User   // id -> User
 }
 
-// NewMemoryUserStore 创建内存存储并添加mock数据。
+// NewMemoryUserStore 会预置 3 个演示用户，因此前端登录页可以开箱即用。
+// NewMemoryUserStore：启动时预置三组演示账号，portal.html 与 todo-login.html 的默认凭据都来自这里。
 func NewMemoryUserStore() *MemoryUserStore {
 	store := &MemoryUserStore{
 		users:     make(map[string]User),
@@ -75,6 +82,7 @@ func NewMemoryUserStore() *MemoryUserStore {
 	return store
 }
 
+// Create 用于注册或后台创建用户。当前实现会默认给新用户分配普通用户角色。
 func (m *MemoryUserStore) Create(ctx context.Context, email, passwordHash string) (User, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -94,6 +102,8 @@ func (m *MemoryUserStore) Create(ctx context.Context, email, passwordHash string
 	return u, nil
 }
 
+// FindByEmail 是 handleLogin 的关键依赖。登录失败时，通常先确认这里是否查到了正确用户。
+// FindByEmail：登录流程的关键入口。
 func (m *MemoryUserStore) FindByEmail(ctx context.Context, email string) (User, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -104,6 +114,8 @@ func (m *MemoryUserStore) FindByEmail(ctx context.Context, email string) (User, 
 	return u, nil
 }
 
+// FindByID 会被 /v1/me、RBAC 和 refresh token 校验频繁调用。
+// FindByID：认证中间件放行后，/v1/me 和 RBAC 都会继续从这里补全用户信息。
 func (m *MemoryUserStore) FindByID(ctx context.Context, id uint) (User, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

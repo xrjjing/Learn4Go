@@ -1,5 +1,15 @@
 package main
 
+// Package main 是 TODO API 的进程入口。
+//
+// 建议把这个文件当成“启动编排层”来看：
+// 1. 读取环境变量和监听地址
+// 2. 选择内存 / SQLite / MySQL 存储实现
+// 3. 创建 todo.Server，并把 JWT 配置注入进去
+// 4. 组装 net/http.Server
+// 5. 监听系统信号，做优雅关闭
+//
+// 排查后端启动失败、环境变量不生效、存储切换异常时，优先从本文件进入。
 import (
 	"context"
 	"log"
@@ -45,12 +55,16 @@ import (
 //	  -e MYSQL_DATABASE=learn4go \
 //	  mysql:8
 func main() {
-	// 读取配置
+	// main 只负责“装配”，真正的路由和业务处理都下沉在 internal/todo。
+	// 前端页面无论是直连 8080，还是通过 8888 网关代理，最终都会落到这里启动的 HTTP 服务。
+
+	// 第一步：读取运行模式相关配置
 	storage := getEnv("TODO_STORAGE", "memory")
 	addr := getEnv("TODO_ADDR", ":8080")
 	jwtSecret := getEnv("JWT_SECRET", "")
 
-	// 创建存储
+	// 第二步：根据 TODO_STORAGE 选择具体存储实现。
+	// 这里决定后续 CRUD 最终落到内存 map 还是 GORM 数据库。
 	var store todo.TodoStore
 	var err error
 
@@ -81,7 +95,8 @@ func main() {
 		log.Println("使用内存存储")
 	}
 
-	// JWT 密钥配置检查
+	// 第三步：校验 JWT 密钥。
+	// 除 memory 演示模式外，其他模式都应该显式提供 JWT_SECRET。
 	if jwtSecret == "" {
 		if storage == "memory" {
 			jwtSecret = "dev-secret-for-memory-mode-only"
@@ -91,10 +106,11 @@ func main() {
 		}
 	}
 
-	// 启动服务
+	// 第四步：创建业务 Server。
+	// todo.NewServer 内部会注册路由、准备用户存储、刷新令牌表以及清理协程。
 	s := todo.NewServer(store, todo.WithJWT(jwtSecret, 24*time.Hour))
 
-	// 创建 HTTP 服务器
+	// 第五步：把业务 Handler 挂到标准库 HTTP Server 上。
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      s.Handler(),
@@ -103,7 +119,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 在 goroutine 中启动服务器
+	// 第六步：异步启动 HTTP 服务，主 goroutine 留给优雅关闭流程使用。
 	go func() {
 		log.Printf("TODO API 启动: http://localhost%s", addr)
 		log.Println("API 端点 (v1):")
@@ -120,7 +136,7 @@ func main() {
 		}
 	}()
 
-	// 优雅关闭：监听 SIGINT 和 SIGTERM
+	// 第七步：监听退出信号，进入优雅关闭。
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -130,12 +146,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// 关闭 HTTP 服务器
+	// 先停止接收新请求，再等待飞行中的请求结束。
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("HTTP 服务器关闭错误: %v", err)
 	}
 
-	// 关闭业务层资源（清理协程等）
+	// 再关闭 Server 自己维护的后台资源，比如 refresh/loginFailure 清理协程。
 	s.Shutdown()
 
 	// 关闭数据库连接
@@ -148,6 +164,8 @@ func main() {
 	log.Println("服务已安全关闭")
 }
 
+// getEnv 是本文件的最小配置读取辅助函数。
+// 当排查环境变量“看起来没生效”时，可以先确认变量名和默认值是否走到了这里。
 func getEnv(key, defaultVal string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
@@ -155,6 +173,7 @@ func getEnv(key, defaultVal string) string {
 	return defaultVal
 }
 
+// getEnvInt 专门处理整型环境变量。解析失败时会回退默认值，而不会中断启动流程。
 func getEnvInt(key string, defaultVal int) int {
 	if val := os.Getenv(key); val != "" {
 		if i, err := strconv.Atoi(val); err == nil {

@@ -1,5 +1,14 @@
 package todo
 
+// 本文件是 TODO 数据层的内存实现。
+//
+// 适用场景：
+// - 本地学习
+// - 不依赖数据库时的快速联调
+// - `TODO_STORAGE=memory` 模式
+//
+// 上游调用方主要是 handler.go 中的 TODO 路由；
+// 若你想确认“数据到底有没有真正写进去”，可以直接从 Create/Get/Toggle/Delete 看。
 import (
 	"crypto/rand"
 	"encoding/binary"
@@ -17,8 +26,10 @@ type Todo struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// TodoStore 定义存储接口 (内存/数据库实现此接口)
-// 将错误透传给上层，避免静默失败伪装成 2xx/404
+// TodoStore 是 handler 层依赖的抽象边界。
+//
+// 这意味着 handler 不关心底层是内存 map 还是数据库，只关心接口语义是否一致。
+// 将错误显式向上返回，可以让 API 层正确区分 404、500 和真正的业务失败。
 type TodoStore interface {
 	List() ([]Todo, error)
 	ListByUser(userID uint) ([]Todo, error)
@@ -29,14 +40,16 @@ type TodoStore interface {
 	Delete(id int) (bool, error)
 }
 
-// Store 提供并发安全的内存存储 (实现 TodoStore 接口)
+// Store 是 TodoStore 的内存版实现。
+// 使用 mutex 保护 items，使用 atomic.Int64 生成 ID，便于在并发场景下保持简单可读。
 type Store struct {
 	mu     sync.Mutex
 	items  map[int]Todo
 	nextID atomic.Int64 // 原子递增的 ID 生成器，确保并发安全
 }
 
-// NewStore 创建空存储。
+// NewStore 会初始化空 map，并给 nextID 一个随机起点，避免演示环境中 ID 过于可预测。
+// NewStore：创建并初始化并发安全的内存仓库。
 func NewStore() *Store {
 	s := &Store{items: make(map[int]Todo)}
 	// 使用加密随机数初始化 ID 起始值，避免 ID 可预测
@@ -48,7 +61,7 @@ func NewStore() *Store {
 	return s
 }
 
-// List 返回全部待办的拷贝。
+// List 给管理员/访客查看全量 TODO 使用。普通用户通常走 ListByUser。
 func (s *Store) List() ([]Todo, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -60,6 +73,7 @@ func (s *Store) List() ([]Todo, error) {
 }
 
 // ListByUser 返回指定用户的待办列表
+// ListByUser：普通用户查询自己的待办时会落到这里。
 func (s *Store) ListByUser(userID uint) ([]Todo, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -106,8 +120,9 @@ func (s *Store) ListPaged(page, pageSize int) ([]Todo, int, error) {
 	return all[offset:end], total, nil
 }
 
-// Create 新建待办。
-// 使用原子递增 ID，确保并发安全且不冲突
+// Create 是最常见的写入入口。
+// 调用链通常是：POST /v1/todos → handler.go → Store.Create。
+// Create：POST /v1/todos 的最终写入点之一。
 func (s *Store) Create(title string, userID uint) (Todo, error) {
 	id := int(s.nextID.Add(1))
 
@@ -133,7 +148,8 @@ func (s *Store) Get(id int) (Todo, bool, error) {
 	return t, ok, nil
 }
 
-// Toggle 设置完成状态。
+// Toggle 由 PUT /v1/todos/{id} 调用，只负责更新 done，不修改其他字段。
+// Toggle：PUT /v1/todos/{id} 的最终更新点之一。
 func (s *Store) Toggle(id int, done bool) (Todo, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -146,7 +162,8 @@ func (s *Store) Toggle(id int, done bool) (Todo, bool, error) {
 	return t, true, nil
 }
 
-// Delete 删除待办。
+// Delete 由 DELETE /v1/todos/{id} 调用。若返回 false，handler 会翻译成 404。
+// Delete：DELETE /v1/todos/{id} 的最终删除点之一。
 func (s *Store) Delete(id int) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

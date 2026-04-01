@@ -1,5 +1,12 @@
 package todo
 
+// 本文件提供 TodoStore 的数据库实现。
+//
+// 它和 store.go 的关系是“同接口、不同落地方式”：
+// - handler.go 始终只依赖 TodoStore
+// - main.go 根据环境变量选择这里的 DBStore，或者内存版 Store
+//
+// 排查数据库模式问题时，优先看：NewDBStore -> Ping -> Create/List/Get/Toggle/Delete。
 import (
 	"errors"
 	"fmt"
@@ -12,7 +19,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// TodoModel GORM 模型
+// TodoModel 是数据库表结构到 Go 结构的映射。
+// API 层真正对外返回的是 Todo，二者通过 modelToTodo 转换。
 type TodoModel struct {
 	ID        uint      `gorm:"primaryKey"`
 	UserID    uint      `gorm:"not null;index"`
@@ -25,12 +33,12 @@ func (TodoModel) TableName() string {
 	return "todos"
 }
 
-// DBStore 基于 GORM 的数据库存储
+// DBStore 把 GORM 封装成 TodoStore 接口，供 handler 透明调用。
 type DBStore struct {
 	db *gorm.DB
 }
 
-// DBConfig 数据库配置
+// DBConfig 描述数据库连接和连接池参数；main.go 会只填最核心的一部分字段。
 type DBConfig struct {
 	Driver   string // sqlite, mysql
 	Host     string
@@ -46,7 +54,8 @@ type DBConfig struct {
 	ConnMaxIdleTime time.Duration
 }
 
-// NewDBStore 创建数据库存储
+// NewDBStore 是数据库模式的总装配入口：选择驱动、建连、配置连接池、自动迁移。
+// NewDBStore：负责驱动选择、连接池配置和 AutoMigrate，是数据库模式的初始化核心。
 func NewDBStore(cfg DBConfig) (*DBStore, error) {
 	var dialector gorm.Dialector
 
@@ -72,7 +81,7 @@ func NewDBStore(cfg DBConfig) (*DBStore, error) {
 		return nil, err
 	}
 
-	// 配置连接池
+	// 连接池配置集中放在这里，便于排查数据库连接数、空闲连接和生命周期相关问题。
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("获取底层连接失败: %w", err)
@@ -101,7 +110,7 @@ func NewDBStore(cfg DBConfig) (*DBStore, error) {
 	sqlDB.SetConnMaxLifetime(maxLifetime)
 	sqlDB.SetConnMaxIdleTime(maxIdleTime)
 
-	// 自动迁移
+	// 自动迁移保证 todos 表在 SQLite / MySQL 场景下都能按当前模型启动。
 	if err := db.AutoMigrate(&TodoModel{}); err != nil {
 		return nil, err
 	}
@@ -135,7 +144,7 @@ func (s *DBStore) Close() error {
 	return sqlDB.Close()
 }
 
-// Ping 检查数据库连接是否可用
+// Ping 主要给 /healthz 使用，用于把“服务可用”和“数据库可用”区分开。
 func (s *DBStore) Ping() error {
 	sqlDB, err := s.db.DB()
 	if err != nil {
@@ -144,7 +153,7 @@ func (s *DBStore) Ping() error {
 	return sqlDB.Ping()
 }
 
-// List 返回全部待办
+// List/ListByUser/ListPaged 都是查询入口，区别只在过滤维度和是否分页。
 func (s *DBStore) List() ([]Todo, error) {
 	var models []TodoModel
 	if err := s.db.Order("created_at DESC").Find(&models).Error; err != nil {
@@ -160,6 +169,7 @@ func (s *DBStore) List() ([]Todo, error) {
 }
 
 // ListByUser 返回指定用户的待办列表
+// ListByUser：数据库版按用户过滤查询。
 func (s *DBStore) ListByUser(userID uint) ([]Todo, error) {
 	var models []TodoModel
 	if err := s.db.Where("user_id = ?", userID).Order("created_at DESC").Find(&models).Error; err != nil {
@@ -202,6 +212,7 @@ func (s *DBStore) ListPaged(page, pageSize int) ([]Todo, int, error) {
 }
 
 // Create 新建待办
+// Create：数据库版创建待办。
 func (s *DBStore) Create(title string, userID uint) (Todo, error) {
 	model := TodoModel{
 		UserID: userID,
@@ -228,6 +239,7 @@ func (s *DBStore) Get(id int) (Todo, bool, error) {
 }
 
 // Toggle 设置完成状态
+// Toggle：数据库版更新完成状态。
 func (s *DBStore) Toggle(id int, done bool) (Todo, bool, error) {
 	var model TodoModel
 	if err := s.db.First(&model, uint(id)).Error; err != nil {
@@ -246,6 +258,7 @@ func (s *DBStore) Toggle(id int, done bool) (Todo, bool, error) {
 }
 
 // Delete 删除待办
+// Delete：数据库版删除待办。
 func (s *DBStore) Delete(id int) (bool, error) {
 	result := s.db.Delete(&TodoModel{}, uint(id))
 	if result.Error != nil {
@@ -255,7 +268,7 @@ func (s *DBStore) Delete(id int) (bool, error) {
 	return result.RowsAffected > 0, nil
 }
 
-// modelToTodo 转换模型到 API 结构
+// modelToTodo 负责把 GORM 模型转换为 API 层对外返回的统一结构。
 func modelToTodo(m TodoModel) Todo {
 	return Todo{
 		ID:        int(m.ID),

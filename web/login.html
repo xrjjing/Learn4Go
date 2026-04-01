@@ -282,6 +282,9 @@
     </style>
   </head>
   <body>
+    <!-- 页面总览：这是旧版统一登录页，布局上是居中的单卡片登录框。
+         真实调用链是 login.html -> 本页内联脚本 -> /v1/login；若带 ?mock=true，则请求会先被 mock-api.js 拦截。 -->
+    <!-- 页面头部悬浮操作：仅负责亮暗主题切换，不参与登录业务。 -->
     <button
       id="theme-toggle"
       class="theme-toggle-btn"
@@ -325,12 +328,16 @@
       </svg>
     </button>
 
+    <!-- 主工作区：包含登录头部、输入表单、错误提示和页面回链。 -->
     <div class="login-container">
+      <!-- 登录卡片：这是页面唯一业务容器，排查登录问题优先看这里对应的 DOM id。 -->
       <div class="login-box">
+        <!-- 卡片头部：文案说明和欢迎语，不负责状态渲染。 -->
         <div class="login-header">
           <h1 id="login-heading">Welcome Back</h1>
           <p>Sign in to access the Go Learning Platform</p>
         </div>
+        <!-- 输入区：用户名/密码字段与提交按钮，submit 事件会在内联脚本中统一处理。 -->
         <form id="login-form" aria-labelledby="login-heading">
           <div class="form-group">
             <label for="username">Username</label>
@@ -381,8 +388,10 @@
           >
             Login
           </button>
+          <!-- 错误反馈区：网络失败、鉴权失败等消息统一显示在这里。 -->
           <div id="error-message" role="alert" aria-live="assertive"></div>
         </form>
+        <!-- 辅助说明区：提示默认账号，并提供返回学习入口的静态链接。 -->
         <div class="links">
           <p>Default: admin / admin123</p>
           <p style="margin-top: 0.5rem">
@@ -393,10 +402,12 @@
     </div>
 
     <script>
+      // 初始化入口：整合主题切换、表单校验、登录提交和登录后跳转。
       (() => {
         const { Toast, Loading, FormValidator, i18n } = window.Learn4Go || {};
 
         // API Base URL - defaults to same origin for production, configurable for dev
+        // API 基址：优先读 config.js 中的 AppConfig；若开启 mock，则 fetch 会被 mock-api.js 接管。
         const API_BASE =
           window.AppConfig?.apiBaseUrl ?? window.API_BASE_URL ?? "";
 
@@ -428,10 +439,12 @@
         });
 
         // Login form handler
+        // 关键 DOM 引用：排查页面事件是否绑定成功，优先看这里拿到的节点是否存在。
         const loginForm = document.getElementById("login-form");
         const errorMessage = document.getElementById("error-message");
         const submitBtn = document.getElementById("submit-btn");
 
+        // 提交主链路：校验输入 -> POST /v1/login -> 保存 accessToken -> 继续请求 /v1/me 决定跳转目标页。
         loginForm.addEventListener("submit", async (event) => {
           event.preventDefault();
 

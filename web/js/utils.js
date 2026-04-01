@@ -1,9 +1,23 @@
 /**
- * Learn4Go 前端工具库
- * 提供统一的 Toast、加载状态、表单验证和国际化支持
+ * Learn4Go 前端基础工具库。
+ *
+ * 服务页面：
+ * - 当前最直接服务 login.html。
+ * - 也可被后续其他页面复用，用来统一 Toast、按钮 loading、表单校验和多语言文案。
+ *
+ * 结构说明：
+ * - i18n：文案字典与语言切换。
+ * - Toast：顶部提示。
+ * - Loading：按钮和全屏加载态。
+ * - FormValidator：表单字段校验与错误展示。
+ *
+ * 排查建议：
+ * - 登录页按钮一直转圈，先看 Loading.setButton() 是否正确恢复。
+ * - 表单校验提示不出现，先看 FormValidator.validate() 和页面里 data-error/name 是否对齐。
  */
 
 // ==================== 国际化 (P2-F5) ====================
+// i18n 是最基础的文案层；登录页提交前后的提示文本都从这里取。
 const i18n = {
   locale: 'zh-CN',
   messages: {
@@ -72,7 +86,7 @@ const i18n = {
   }
 };
 
-// 初始化语言设置
+// 初始化语言设置。这里是文件加载时立即执行的轻量初始化入口。
 try {
   const savedLocale = localStorage.getItem('locale');
   if (savedLocale && i18n.messages[savedLocale]) {
@@ -81,6 +95,8 @@ try {
 } catch (e) {}
 
 // ==================== Toast 通知 (P2-F3) ====================
+// Toast 负责页面右上角即时反馈，适合登录成功/失败、保存成功等短消息。
+// Toast 组件：适合给登录、保存、失败等轻量反馈使用。
 const Toast = {
   container: null,
 
@@ -195,6 +211,8 @@ style.textContent = `
 document.head.appendChild(style);
 
 // ==================== 加载状态 (P2-F2) ====================
+// Loading 同时覆盖“按钮 loading”与“全屏遮罩”两类场景。
+// Loading 组件：负责按钮忙碌态和覆盖层忙碌态。
 const Loading = {
   setButton(btn, loading) {
     if (loading) {
@@ -250,6 +268,9 @@ const Loading = {
 };
 
 // ==================== 表单验证 (P2-F1) ====================
+// FormValidator 是 login.html 提交前的第一道前端校验。
+// 它只做页面体验层的拦截，后端校验仍以 API 返回为准。
+// 表单校验器：login.html 会通过规则表驱动最小校验逻辑。
 const FormValidator = {
   rules: {
     required: (value) => value?.trim() ? null : 'required',
@@ -296,5 +317,6 @@ const FormValidator = {
   }
 };
 
-// 导出到全局
+// 导出到全局。页面一般通过 window.Learn4Go.xxx 读取，而不是模块化 import。
+// 全局暴露：静态 HTML 页面不走模块打包，因此通过 window.Learn4Go 给内联脚本复用。
 window.Learn4Go = { i18n, Toast, Loading, FormValidator };

@@ -354,7 +354,11 @@
     </style>
   </head>
   <body>
+    <!-- 页面总览：这是后台管理页，采用“左侧导航 + 右侧主工作区 + 底部调试面板”的后台布局。
+         页面真实链路是 admin.html -> 本页内联脚本 -> common.js(apiClient/renderGenericTable) -> /v1/me、/v1/users、/v1/rbac/* 等接口。 -->
+    <!-- 页面骨架：固定侧边栏负责面板切换，右侧主内容区负责数据加载和表格渲染。 -->
     <div class="admin-layout">
+      <!-- 左侧导航区：这里只做面板切换，不直接加载数据；真正加载逻辑在 switchPanel() 中完成。 -->
       <aside class="sidebar">
         <div class="sidebar-header">Admin Dashboard</div>
         <div class="sidebar-content">
@@ -382,7 +386,9 @@
         </div>
       </aside>
 
+      <!-- 右侧主工作区：包含顶部操作栏与多个内容面板，面板之间通过 active 类切换。 -->
       <main class="main-content">
+        <!-- 顶部操作区：显示当前用户、调试开关、主题开关和退出按钮。 -->
         <div class="top-bar">
           <div class="top-bar-title">RBAC Management</div>
           <div class="top-bar-actions">
@@ -435,8 +441,9 @@
           </div>
         </div>
 
+        <!-- 主内容区：Dashboard / Users / Roles / Permissions / Logs 五个面板共用这一块容器。 -->
         <div class="content-area">
-          <!-- Dashboard Panel -->
+          <!-- 仪表盘面板：展示用户、角色、权限、日志四个汇总指标。 -->
           <section id="dashboard" class="content-panel active">
             <div class="stats-grid">
               <div class="stat-card">
@@ -458,7 +465,7 @@
             </div>
           </section>
 
-          <!-- Users Panel -->
+          <!-- 用户管理面板：表格主体由 renderGenericTable() 动态填充，创建按钮走 prompt + createUser()。 -->
           <section
             id="users"
             class="content-panel"
@@ -495,7 +502,7 @@
             </div>
           </section>
 
-          <!-- Roles Panel -->
+          <!-- 角色管理面板：用于查看角色及权限列表，新增角色同样通过 prompt 驱动。 -->
           <section
             id="roles"
             class="content-panel"
@@ -530,7 +537,7 @@
             </div>
           </section>
 
-          <!-- Permissions Panel -->
+          <!-- 权限列表面板：只读展示当前后端返回的权限定义。 -->
           <section
             id="permissions"
             class="content-panel"
@@ -557,7 +564,7 @@
             </div>
           </section>
 
-          <!-- Logs Panel -->
+          <!-- 审计日志面板：不是表格而是 pre 文本区，直接展示接口返回 JSON。 -->
           <section
             id="logs"
             class="content-panel"
@@ -590,6 +597,7 @@ Loading audit logs...</pre
     </div>
 
     <script>
+      // 初始化入口：先检查 accessToken，再准备主题、导航、各面板数据加载函数与调试开关。
       (() => {
         // API Configuration - defaults to same origin for production
         const API_BASE =
@@ -597,7 +605,7 @@ Loading audit logs...</pre
         const LOG_API_BASE =
           window.AppConfig?.logApiBaseUrl ?? window.LOG_API_BASE_URL ?? "";
 
-        // Authentication check
+        // 鉴权前置检查：没有 token 就立即回退到 login.html，避免后台页空跑。
         const token = localStorage.getItem("accessToken");
         if (!token) {
           window.location.href = "login.html";
@@ -648,6 +656,7 @@ Loading audit logs...</pre
         // 兼容两种返回格式：
         // 1) 统一包装: { code: "OK", data: {...} }
         // 2) Go TODO API 原生 JSON: 直接返回对象或数组
+        // 管理后台统一请求入口：负责带上 Authorization、兼容不同响应包裹格式，并在 401 时回退登录页。
         async function apiFetch(url, options = {}) {
           const headers = {
             Authorization: `Bearer ${token}`,
@@ -686,6 +695,7 @@ Loading audit logs...</pre
         const navItems = document.querySelectorAll(".nav-item");
         const panels = document.querySelectorAll(".content-panel");
 
+        // 面板切换入口：点击左侧导航后会切换 active 面板，并按需触发对应数据加载。
         function switchPanel(panelId) {
           navItems.forEach((item) =>
             item.classList.toggle("active", item.dataset.panel === panelId)
@@ -722,6 +732,7 @@ Loading audit logs...</pre
         });
 
         // Data Loading Functions
+        // 当前用户加载：用于右上角显示身份，同时拦截非管理员访问。
         async function loadCurrentUser() {
           try {
             const user = await apiFetch(`${API_BASE}/v1/me`);
@@ -737,6 +748,7 @@ Loading audit logs...</pre
           }
         }
 
+        // 仪表盘数据加载：并发读取多组资源，用于刷新顶部四张统计卡片。
         async function loadDashboard() {
           try {
             const [users, roles, permissions] = await Promise.all([
@@ -768,6 +780,7 @@ Loading audit logs...</pre
           }
         }
 
+        // 用户列表加载：把 /v1/users/ 返回结果交给 common.js 的 renderGenericTable 生成 tbody。
         async function loadUsers() {
           try {
             const users = await apiFetch(`${API_BASE}/v1/users/`);
@@ -800,6 +813,7 @@ Loading audit logs...</pre
           }
         }
 
+        // 角色列表加载：结构与用户列表类似，只是列定义不同。
         async function loadRoles() {
           try {
             const roles = await apiFetch(`${API_BASE}/v1/rbac/roles`);
@@ -821,6 +835,7 @@ Loading audit logs...</pre
           }
         }
 
+        // 权限列表加载：只渲染 code/description 等只读字段。
         async function loadPermissions() {
           try {
             const permissions = await apiFetch(
@@ -839,6 +854,7 @@ Loading audit logs...</pre
           }
         }
 
+        // 日志面板加载：把日志接口响应格式化成 JSON 文本，方便调试查看。
         window.loadAuditLogs = async function () {
           const viewer = document.getElementById("log-viewer");
           viewer.textContent = "Loading...";
@@ -852,7 +868,7 @@ Loading audit logs...</pre
           }
         };
 
-        // CRUD Operations (exposed globally for onclick handlers)
+        // 全局动作函数：因为 HTML 里存在 onclick，这些函数必须挂到 window 上给按钮直接调用。
         window.toggleUserActive = async function (userId, setActive) {
           const action = setActive ? "enable" : "disable";
           if (
@@ -918,7 +934,7 @@ Loading audit logs...</pre
           }
         }
 
-        // Initialize
+        // 页面初始化：首次进入后台默认加载当前用户并打开 dashboard 面板。
         loadCurrentUser();
         switchPanel("dashboard");
 
@@ -932,8 +948,7 @@ Loading audit logs...</pre
       })();
     </script>
 
-    <!-- ====================================================== -->
-    <!-- 调试面板 - 显示 API 请求/响应日志                      -->
+    <!-- 调试面板：配合 common.js 里的 logApiActivity/toggleDebugPanel 使用，用来排查请求是否发出、响应是否返回。 -->
     <!-- ====================================================== -->
     <div id="debug-panel" class="debug-panel">
       <div class="debug-header">

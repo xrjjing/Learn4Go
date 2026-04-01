@@ -1,5 +1,18 @@
 package todo
 
+// 本文件是 TODO API 的“总调度中心”。
+//
+// 你可以把它理解成一张总路由图：
+// - Server 持有存储、用户、JWT、RBAC、限流等依赖
+// - routes() 注册所有 HTTP 路由
+// - Handler() 组装日志、CORS、鉴权、授权、限流中间件链
+// - 具体 handleXxx 函数负责把请求翻译成业务操作
+//
+// 排查建议：
+// - 接口路径打到哪里：看 routes()
+// - 401/403/429：看 Handler() 链上的 auth / authz / rate limiter
+// - 登录和 refresh：看 handleLogin / handleRefresh
+// - TODO CRUD：看 `/v1/todos` 与 `/v1/todos/{id}` 两段路由
 import (
 	"encoding/json"
 	"errors"
@@ -12,12 +25,19 @@ import (
 	"time"
 )
 
-// 初始化结构化日志
+// slogger 用于记录结构化 HTTP 访问日志，便于在本地和容器环境中统一检索。
 var slogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 	Level: slog.LevelInfo,
 }))
 
-// Server 封装路由与存储。
+// Server 聚合了 TODO API 运行时所需的核心依赖。
+//
+// 其中：
+// - store 负责 TODO 数据
+// - userStore 负责用户与角色来源
+// - jwtManager 负责 access token
+// - refreshStore/loginFailures 负责补充安全状态
+// - mux 负责基础路由注册
 type Server struct {
 	store       TodoStore
 	userStore   UserStore
@@ -25,7 +45,8 @@ type Server struct {
 	rateLimiter *RateLimiter
 	rbacManager *RBACManager
 	mux         *http.ServeMux
-	// 登录安全与刷新
+	// 登录安全与 refresh token 状态。
+	// 这部分数据当前都在内存里，适合教学演示，但不适合多实例共享。
 	refreshTTL    time.Duration
 	refreshStore  map[string]refreshSession
 	refreshMu     sync.Mutex
@@ -61,8 +82,11 @@ func WithRateLimiter(rl *RateLimiter) Option {
 	}
 }
 
-// NewServer 创建带路由的 HTTP 处理器。
-// store 可以是 *Store (内存) 或 *DBStore (数据库)
+// NewServer 是业务层的装配入口。
+//
+// main.go 在启动阶段调用它；页面请求最终也都会经过它返回的 Handler。
+// 如果要替换用户存储、JWT 密钥或限流器，通常都从这里通过 Option 注入。
+// NewServer：构造默认依赖并注册全部路由，是 main.go 与业务层的连接点。
 func NewServer(store TodoStore, opts ...Option) *Server {
 	s := &Server{
 		store:         store,
@@ -83,7 +107,7 @@ func NewServer(store TodoStore, opts ...Option) *Server {
 	return s
 }
 
-// Shutdown 优雅关闭服务器，停止清理协程
+// Shutdown 负责回收 Server 自己维护的后台资源。main.go 会在进程退出时调用它。
 func (s *Server) Shutdown() {
 	close(s.cleanupDone)
 	if s.rateLimiter != nil {
@@ -133,7 +157,13 @@ func (s *Server) cleanExpiredLoginFailures() {
 	}
 }
 
-// Handler 返回带日志中间件的处理器。
+// Handler 负责按固定顺序组装中间件链。
+//
+// 实际执行顺序（外到内）大致是：
+// CORS -> 访问日志 -> 限流(可选) -> 鉴权 -> RBAC(仅 /v1/todos*) -> 具体路由处理器
+//
+// 只要接口出现 401/403/429，一般都应该先从这里确认请求经过了哪几层。
+// Handler：统一拼装中间件顺序。当前链路是 CORS -> 日志 -> 认证 -> 限流(可选) -> RBAC(todos 路径) -> 具体路由。
 func (s *Server) Handler() http.Handler {
 	// 基础路由处理
 	base := http.Handler(s.mux)
@@ -158,6 +188,10 @@ func (s *Server) Handler() http.Handler {
 	return h
 }
 
+// routes 注册所有 HTTP 路由。
+//
+// 看调用链最有效的方式就是从这里按路径往下追。
+// routes：定义所有 HTTP 入口，并把不同 URL 映射到对应业务处理函数。
 func (s *Server) routes() {
 	// 根路径返回服务说明，避免裸访问 404 误判
 	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -198,12 +232,13 @@ func (s *Server) routes() {
 		respondJSON(w, status, code)
 	})
 
-	// 认证相关路由 (v1)
+	// 认证主链路：注册 / 登录 / refresh。
+	// 对前端登录页和 auth-helper.js 来说，这一组是最核心的后端入口。
 	s.mux.HandleFunc("/v1/register", s.handleRegister)
 	s.mux.HandleFunc("/v1/login", s.handleLogin)
 	s.mux.HandleFunc("/v1/refresh", s.handleRefresh)
 
-	// 用户和 RBAC 相关路由
+	// 管理后台相关接口：当前用户、退出登录、用户管理、角色和权限列表。
 	s.mux.Handle("/v1/me", s.authMiddleware(http.HandlerFunc(s.handleGetCurrentUser)))
 	s.mux.Handle("/v1/logout", s.authMiddleware(http.HandlerFunc(s.handleLogout)))
 	s.mux.Handle("/v1/users", s.authMiddleware(http.HandlerFunc(s.handleUsers)))
@@ -211,6 +246,10 @@ func (s *Server) routes() {
 	s.mux.Handle("/v1/rbac/roles", s.authMiddleware(http.HandlerFunc(s.handleRoles)))
 	s.mux.Handle("/v1/rbac/permissions", s.authMiddleware(http.HandlerFunc(s.handlePermissions)))
 
+	// TODO 集合资源：
+	// - GET 负责列表
+	// - POST 负责创建
+	// 鉴权与 RBAC 已经在 Handler() 中间件链里处理过，这里主要做业务分发。
 	s.mux.HandleFunc("/v1/todos", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -279,6 +318,10 @@ func (s *Server) routes() {
 		}
 	})
 
+	// TODO 单资源：
+	// - PUT 更新完成状态
+	// - DELETE 删除
+	// 路径里的 id 会先在这里解析，再调用存储层。
 	s.mux.HandleFunc("/v1/todos/", func(w http.ResponseWriter, r *http.Request) {
 		idStr := r.URL.Path[len("/v1/todos/"):]
 		id, err := strconv.Atoi(idStr)
@@ -322,6 +365,8 @@ func (s *Server) routes() {
 	})
 }
 
+// respondJSON / respondError 是最底层的响应辅助函数。
+// 当你只想确认“后端最终返回了什么 JSON”，可以直接从这里打日志或下断点。
 func respondJSON(w http.ResponseWriter, v any, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
@@ -332,7 +377,8 @@ func respondError(w http.ResponseWriter, code int, msg string) {
 	respondJSON(w, map[string]any{"error": msg}, code)
 }
 
-// handleRegister 用户注册
+// handleRegister 处理公开注册接口。
+// 调用链：POST /v1/register -> 校验邮箱/密码 -> HashPassword -> UserStore.Create。
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -379,7 +425,15 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusCreated)
 }
 
-// handleLogin 用户登录获取 JWT
+// handleLogin 是登录主入口。
+//
+// 核心步骤：
+// 1. 检查账号是否被锁定
+// 2. 读取用户
+// 3. 校验密码
+// 4. 生成 access + refresh token
+// 5. 返回给前端保存
+// handleLogin：登录主链路，负责校验账户、检查锁定、比对密码并签发 access/refresh。
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -443,7 +497,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// handleGetCurrentUser 获取当前用户信息
+// handleGetCurrentUser 主要给前端判断“当前是谁、是不是管理员”使用。
+// handleGetCurrentUser：给前端回显当前用户身份信息，admin.html 会在进入后台时先调用这里。
 func (s *Server) handleGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -476,7 +531,7 @@ func (s *Server) handleGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// handleLogout 退出登录
+// handleLogout 通过删除该用户的 refresh token 来实现“退出后不能再自动刷新”。
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -503,7 +558,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// handleUsers 用户管理 (列表/创建)
+// handleUsers 是管理后台用户管理入口，只允许管理员访问。
 func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 	// 验证管理员权限
 	userID, ok := GetUserID(r.Context())
@@ -528,7 +583,8 @@ func (s *Server) handleUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleUsersList 获取用户列表
+// handleUsersList 当前直接读取 MemoryUserStore，因此更偏演示实现。
+// handleUsersList：返回用户列表，供 admin.html 的 Users 面板渲染。
 func (s *Server) handleUsersList(w http.ResponseWriter, r *http.Request) {
 	// 获取所有用户 (从 MemoryUserStore)
 	store, ok := s.userStore.(*MemoryUserStore)
@@ -554,7 +610,7 @@ func (s *Server) handleUsersList(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, users, http.StatusOK)
 }
 
-// handleUsersCreate 创建新用户
+// handleUsersCreate 支持后台创建用户，并可在 MemoryUserStore 场景下提升为管理员。
 func (s *Server) handleUsersCreate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email       string `json:"email"`
@@ -625,7 +681,7 @@ func (s *Server) handleUsersCreate(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusCreated)
 }
 
-// handleUserDetail 用户详情操作 (更新)
+// handleUserDetail 处理 `/v1/users/{id}` 这类带路径参数的后台接口。
 func (s *Server) handleUserDetail(w http.ResponseWriter, r *http.Request) {
 	// 验证管理员权限
 	userID, ok := GetUserID(r.Context())
@@ -656,7 +712,7 @@ func (s *Server) handleUserDetail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleUserUpdate 更新用户状态
+// handleUserUpdate 当前主要是兼容前端期望，is_active 尚未真正落库。
 func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request, targetID uint) {
 	var body struct {
 		IsActive *bool `json:"is_active"`
@@ -690,7 +746,7 @@ func (s *Server) handleUserUpdate(w http.ResponseWriter, r *http.Request, target
 	}, http.StatusOK)
 }
 
-// handleRoles 角色管理
+// handleRoles 返回当前系统内置角色说明，方便后台页面渲染角色表。
 func (s *Server) handleRoles(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -736,7 +792,7 @@ func (s *Server) handleRoles(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handlePermissions 权限列表查询
+// handlePermissions 返回权限清单，供前端管理页展示。
 func (s *Server) handlePermissions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -769,7 +825,9 @@ func (s *Server) handlePermissions(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, permissions, http.StatusOK)
 }
 
-// handleRefresh 刷新 access token
+// handleRefresh 是 auth-helper.js 自动刷新链路的后端入口。
+// 如果前端“登录后很快又掉线”，优先检查这里和 security.go。
+// handleRefresh：refresh token 换新 access 的入口，同时旋转 refresh token。
 func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -815,7 +873,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusOK)
 }
 
-// responseWriter 包装器，用于捕获响应状态码
+// responseWriter 用于让日志中间件拿到最终状态码。
 type responseWriter struct {
 	http.ResponseWriter
 	statusCode int
@@ -826,7 +884,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-// 结构化日志中间件
+// loggingMiddleware 负责记录每次请求的方法、路径、状态码和耗时。
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
